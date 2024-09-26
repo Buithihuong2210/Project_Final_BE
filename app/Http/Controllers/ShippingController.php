@@ -8,30 +8,31 @@ use Illuminate\Support\Facades\Validator;
 
 class ShippingController extends Controller
 {
-    // Fetch all shipping records
+    // Get all shipping records
     public function index()
     {
         try {
             $shippings = Shipping::all();
             return response()->json($shippings, 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error fetching shippings', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An error occurred while retrieving shipping records.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
-    // Fetch a single shipping record
+    // Get a specific shipping record
     public function show($shipping_id)
     {
         try {
-            $shipping = Shipping::find($shipping_id);
-
-            if (!$shipping) {
-                return response()->json(['message' => 'Shipping not found'], 404);
-            }
-
+            $shipping = Shipping::findOrFail($shipping_id);
             return response()->json($shipping, 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error fetching shipping', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Shipping not found.',
+                'error' => $e->getMessage(),
+            ], 404);
         }
     }
 
@@ -40,19 +41,21 @@ class ShippingController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:shippings,name', // Ensure the name is unique
+                'name' => 'required|string|unique:shippings,name', // Ensure name is unique
                 'shipping_amount' => 'required|numeric',
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return response()->json($validator->errors(), 422);
             }
 
             $shipping = Shipping::create($request->all());
-
             return response()->json($shipping, 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error creating shipping', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An error occurred while creating the shipping record.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -60,26 +63,24 @@ class ShippingController extends Controller
     public function update(Request $request, $shipping_id)
     {
         try {
-            $shipping = Shipping::find($shipping_id);
-
-            if (!$shipping) {
-                return response()->json(['message' => 'Shipping not found'], 404);
-            }
+            $shipping = Shipping::findOrFail($shipping_id);
 
             $validator = Validator::make($request->all(), [
-                'name' => 'sometimes|required|string|max:255|unique:shippings,name,' . $shipping_id . ',shipping_id', // Ensure unique name but exclude current record
-                'shipping_amount' => 'sometimes|required|numeric',
+                'name' => 'required|string|unique:shippings,name,' . $shipping->id, // Ensure name is unique except for current record
+                'shipping_amount' => 'required|numeric',
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return response()->json($validator->errors(), 422);
             }
 
             $shipping->update($request->all());
-
             return response()->json($shipping, 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating shipping', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An error occurred while updating the shipping record.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -87,21 +88,28 @@ class ShippingController extends Controller
     public function destroy($shipping_id)
     {
         try {
-            // Find the shipping record by its ID
+            // Attempt to find the shipping record by ID
             $shipping = Shipping::findOrFail($shipping_id);
 
             // Delete the shipping record
             $shipping->delete();
 
-            // Return a success message
-            return response()->json(['message' => "Shipping {$shipping_id} deleted successfully"], 200);
-        } catch (ModelNotFoundException $e) {
-            // Handle case where the shipping record is not found
-            return response()->json(['message' => 'Shipping not found'], 404);
-        } catch (Exception $e) {
-            // Handle any other unexpected exceptions
-            return response()->json(['message' => 'An error occurred while deleting the shipping.', 'error' => $e->getMessage()], 500);
+            // Return a 204 No Content response
+            return response()->json(null, 204);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle the case where the shipping record is not found
+            return response()->json([
+                'message' => 'Shipping not found.',
+                'error' => $e->getMessage(),
+            ], 404);
+        } catch (\Exception $e) {
+            // Handle any other exceptions
+            return response()->json([
+                'message' => 'An error occurred while deleting the shipping record.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
+
 
 }

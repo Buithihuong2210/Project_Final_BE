@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('shippings', function (Blueprint $table) {
-            $table->id('shipping_id');
-            $table->string('name');
-            $table->decimal('shipping_amount', 10, 2);
-            $table->timestamps();
+        Schema::table('shopping_carts', function (Blueprint $table) {
+            $table->decimal('subtotal', 10, 2)->default(0)->after('user_id'); // Add subtotal column after user_id
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('shippings');
+        Schema::table('shopping_carts', function (Blueprint $table) {
+            $table->dropColumn('subtotal'); // Drop subtotal column
+        });
     }
 };

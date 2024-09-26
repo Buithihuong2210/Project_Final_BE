@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ShoppingCart extends Model
 {
-    protected $fillable = ['user_id'];
+    use HasFactory;
 
+    // Allow mass assignment for the following fields
+    protected $fillable = ['user_id', 'subtotal']; // Added subtotal to the fillable fields
+
+    // Define the relationship with CartItem
     public function items()
     {
         return $this->hasMany(CartItem::class, 'shopping_cart_id');
     }
-
-    use HasFactory;
 }

@@ -11,6 +11,26 @@ use Exception;
 class CartController extends Controller
 {
     /**
+     * List all items in the cart for the authenticated user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index()
+    {
+        try {
+            // Find or create the shopping cart for the authenticated user
+            $cart = ShoppingCart::firstOrCreate(['user_id' => auth()->id()]);
+
+            // Get the cart with subtotal
+            $cartData = $this->getCartWithSubtotal($cart);
+
+            return response()->json($cartData, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Error retrieving cart: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Add a product to the cart.
      *
      * @param \Illuminate\Http\Request $request
@@ -22,7 +42,7 @@ class CartController extends Controller
             // Validate the request data
             $request->validate([
                 'product_id' => 'required|exists:products,product_id',
-                'quantity' => 'required|integer|not_in:0', // Quantity can be positive or negative but not zero
+                'quantity' => 'required|integer|min:1', // Quantity must be a positive integer
             ]);
 
             // Fetch the product to check its available quantity (stock)
@@ -46,17 +66,11 @@ class CartController extends Controller
                     ], 400);
                 }
 
-                if ($newQuantity < 1) {
-                    // If the new quantity is less than 1, remove the item from the cart
-                    $cartItem->delete();
-                    return response()->json(['message' => 'Item removed from cart because quantity was reduced to zero or below.'], 200);
-                } else {
-                    // Update the cart item with the new quantity and price
-                    $cartItem->update([
-                        'quantity' => $newQuantity,
-                        'price' => $cartItem->product->price * $newQuantity // Update the price based on the new quantity
-                    ]);
-                }
+                // Update the cart item with the new quantity and price
+                $cartItem->update([
+                    'quantity' => $newQuantity,
+                    'price' => $product->price * $newQuantity // Update the price based on the new quantity
+                ]);
             } else {
                 // If the item doesn't exist in the cart, add it
                 if ($request->quantity > $product->quantity) {
@@ -66,23 +80,50 @@ class CartController extends Controller
                     ], 400);
                 }
 
-                if ($request->quantity > 0) {
-                    // Add a new item to the cart
-                    $cart->items()->create([
-                        'product_id' => $request->product_id,
-                        'quantity' => $request->quantity,
-                        'price' => $product->price * $request->quantity, // Set price based on product price and quantity
-                    ]);
-                } else {
-                    // Prevent adding a new item with a negative quantity
-                    return response()->json(['message' => 'Cannot add an item with a negative quantity.'], 400);
-                }
+                // Add a new item to the cart
+                $cart->items()->create([
+                    'product_id' => $request->product_id,
+                    'quantity' => $request->quantity,
+                    'price' => $product->price * $request->quantity, // Set price based on product price and quantity
+                ]);
             }
 
             // Reload the cart with updated items and products
-            return response()->json($cart->load('items.product'), 201);
+            return response()->json($this->getCartWithSubtotal($cart), 201);
         } catch (Exception $e) {
             return response()->json(['error' => 'Error updating cart: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Show a specific cart item for the authenticated user.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($id)
+    {
+        try {
+            // Fetch the user's shopping cart
+            $cart = ShoppingCart::with('items.product')->where('user_id', auth()->id())->first();
+
+            // Check if the cart exists
+            if (!$cart) {
+                return response()->json(['message' => 'Cart not found.'], 404);
+            }
+
+            // Find the cart item by ID
+            $cartItem = $cart->items()->where('id', $id)->with('product')->first();
+
+            // Check if the cart item exists
+            if (!$cartItem) {
+                return response()->json(['message' => 'Cart item not found.'], 404);
+            }
+
+            // Return the specific cart item
+            return response()->json($cartItem, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Error retrieving cart item: ' . $e->getMessage()], 500);
         }
     }
 
@@ -124,4 +165,48 @@ class CartController extends Controller
             return response()->json(['error' => 'Error updating cart item: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Remove a specific cart item.
+     *
+     * @param \App\Models\CartItem $item
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy(CartItem $item)
+    {
+        try {
+            // Delete the cart item
+            $item->delete();
+
+            // Return a success message
+            return response()->json(['message' => 'Item removed from cart successfully.'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Error removing cart item: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get the cart with subtotal.
+     *
+     * @param ShoppingCart $cart
+     * @return array
+     */
+    public function getCartWithSubtotal(ShoppingCart $cart)
+    {
+        // Load cart items with associated product information
+        $cart->load('items.product');
+
+        // Calculate subtotal from cart items
+        $subtotal = $cart->items->sum('price');
+
+        // Format the subtotal with two decimal places
+        $cart->subtotal = number_format($subtotal, 2, '.', '');
+
+        // Return the cart with the formatted subtotal
+        return [
+            'cart' => $cart,
+            'subtotal' => $cart->subtotal,
+        ];
+    }
+
 }

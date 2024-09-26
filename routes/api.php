@@ -19,6 +19,9 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\ShippingController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\VoucherController;
+
 
 
 
@@ -108,6 +111,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{item}', [CartController::class, 'destroy']); // Delete specific cart item
     });
 
+// Order routes
+    Route::prefix('orders')->group(function () {
+        Route::post('/', [OrderController::class, 'store']);  // Create a new order
+        Route::get('/' ,[OrderController::class, 'showAll']);
+    });
+
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']); // List all products
         Route::get('/{product_id}', [ProductController::class, 'show']); // Show a specific product
@@ -156,6 +165,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::get('/{product_id}', [ProductController::class, 'show']); // Show a specific product
         Route::put('/{product_id}', [ProductController::class, 'update']); // Update a specific product
         Route::delete('/{product_id}', [ProductController::class, 'destroy']); // Delete a specific product
+        Route::put('/{product_id}/status', [ProductController::class, 'changeStatus']); // Change product status
     });
 
     // Admin hashtag management routes
@@ -174,12 +184,23 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::delete('/{blog}', [BlogController::class, 'destroy']);
     });
     Route::prefix('shippings')->group(function () {
-        Route::get('/', [ShippingController::class, 'index']); // Get all shipping records
+        Route::get('/', [ShippingController::class, 'index']); // List all shipping records
         Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
         Route::post('/', [ShippingController::class, 'store']); // Create a new shipping record
         Route::put('/{shipping_id}', [ShippingController::class, 'update']); // Update a shipping record
-        Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']); // Delete a shipping record
+        Route::delete('/{shipping_id}', [ShippingController::class, 'destroy']); // Delete a specific shipping record
     });
+    // Admin routes for managing vouchers
+    Route::prefix('vouchers')->group(function () {
+        Route::get('/', [VoucherController::class, 'index']); // List all vouchers
+        Route::post('/', [VoucherController::class, 'store']); // Create a new voucher
+        Route::get('/{voucher_id}', [VoucherController::class, 'show']); // Show a specific voucher
+        Route::put('/{voucher_id}', [VoucherController::class, 'update']); // Update a specific voucher
+        Route::delete('/{voucher_id}', [VoucherController::class, 'destroy']); // Delete a specific voucher
+        // Route to change voucher status
+        Route::post('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
+    });
+
 });
 
 
