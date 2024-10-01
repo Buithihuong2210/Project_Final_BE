@@ -26,6 +26,7 @@ class Product extends Model
         'short_description',
         'volume',
         'nature',
+        'rating', // Add rating to fillable
     ];
 
     // Define the status constants
@@ -69,5 +70,18 @@ class Product extends Model
             // Calculate and set the discounted price when updating the product
             $product->discounted_price = $product->calculateDiscountedPrice();
         });
+    }
+
+    /**
+     * Get the average rating for the product based on reviews.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'product_id', 'product_id');
+    }
+
+    public function calculateAverageRating()
+    {
+        return $this->reviews()->avg('rate');
     }
 }

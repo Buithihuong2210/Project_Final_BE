@@ -25,6 +25,7 @@ class Order extends Model
         'total_amount',
         'payment_method',
         'order_date',
+        'status'
     ];
 
     // Optionally, define relationships if needed

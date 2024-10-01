@@ -1,42 +1,77 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Survey;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class SurveyController extends Controller
 {
-    // Store a new survey
-    public function store(Request $request)
-    {
-        try {
-            $validatedData = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-            ]);
-
-            $survey = Survey::create([
-                'user_id' => auth()->id(),
-                'title' => $validatedData['title'],
-                'description' => $validatedData['description'] ?? null,
-            ]);
-
-            return response()->json($survey, 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred while creating the survey', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    // Get a list of all surveys
     public function index()
     {
         try {
             $surveys = Survey::all();
-            return response()->json($surveys);
+            return response()->json($surveys, 200); // List all surveys
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred while fetching surveys', 'error' => $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to retrieve surveys.'], 500);
+        }
+    }
+
+    public function show($survey_id)
+    {
+        try {
+            $survey = Survey::findOrFail($survey_id);
+            return response()->json($survey, 200); // Show a specific survey
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Survey not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to retrieve survey.'], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        try {
+            $survey = Survey::create($validated);
+            return response()->json($survey, 201); // Create a new survey
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to create survey.'], 500);
+        }
+    }
+
+    public function update(Request $request, $survey_id)
+    {
+        $validated = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        try {
+            $survey = Survey::findOrFail($survey_id);
+            $survey->update($validated); // Update a specific survey
+            return response()->json($survey, 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Survey not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to update survey.'], 500);
+        }
+    }
+
+    public function gdestroy($survey_id)
+    {
+        try {
+            $survey = Survey::findOrFail($survey_id);
+            $survey->delete(); // Delete a specific survey
+            return response()->json(['message' => 'Survey deleted successfully.'], 204); // Respond with 204 No Content
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Survey not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete survey.'], 500);
         }
     }
 }
-

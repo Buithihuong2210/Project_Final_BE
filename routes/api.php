@@ -16,11 +16,12 @@ use App\Http\Controllers\HashtagController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QuestionController;
-use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\ReviewController;
+
 
 
 
@@ -60,6 +61,9 @@ Route::prefix('upload')->group(function () {
     Route::delete('/{id}', [ImageController::class, 'destroy']); // Delete a specific image
 });
 
+Route::prefix('responses')->group(function () {
+    Route::get('/', [ResponseController::class, 'index']); // List all responses
+});
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -67,40 +71,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    // Survey routes for users
     Route::prefix('surveys')->group(function () {
-        Route::post('/', [SurveyController::class, 'store']);  // Create a new survey
-        Route::get('/', [SurveyController::class, 'index']);   // List all surveys
-        Route::get('/{survey_id}', [SurveyController::class, 'show']); // Show a specific survey
-        Route::put('/{survey_id}', [SurveyController::class, 'update']); // Update a specific survey
-        Route::delete('/{survey_id}', [SurveyController::class, 'destroy']); // Delete a specific survey
+        Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
     });
 
-    // Question routes
-    Route::prefix('questions')->group(function () {
-        Route::post('/', [QuestionController::class, 'store']);  // Create a new question
-        Route::get('/survey/{survey_id}', [QuestionController::class, 'index']); // List all questions for a survey
-        Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
-        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
-        Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
-    });
-
-    // Answer routes
-    Route::prefix('answers')->group(function () {
-        Route::post('/', [AnswerController::class, 'store']);  // Create a new answer
-        Route::get('/question/{question_id}', [AnswerController::class, 'index']); // List all answers for a question
-        Route::get('/{answer_id}', [AnswerController::class, 'show']); // Show a specific answer
-        Route::put('/{answer_id}', [AnswerController::class, 'update']); // Update a specific answer
-        Route::delete('/{answer_id}', [AnswerController::class, 'destroy']); // Delete a specific answer
-    });
-
-    // Response routes
-    Route::prefix('responses')->group(function () {
-        Route::post('/', [ResponseController::class, 'store']);  // Create a new response
-        Route::get('/question/{question_id}', [ResponseController::class, 'index']); // List all responses for a question
-        Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
-        Route::put('/{response_id}', [ResponseController::class, 'update']); // Update a specific response
-        Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
-    });
 
     // User routes for Cart, Products, Blogs, etc.
     Route::prefix('cart')->group(function () {
@@ -120,6 +95,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']); // List all products
         Route::get('/{product_id}', [ProductController::class, 'show']); // Show a specific product
+    });
+
+    Route::prefix('reviews')->group(function () {
+        Route::post('/{product_id}', [ReviewController::class, 'store']); // Create a review for a product
+        Route::get('/product/{product_id}', [ReviewController::class, 'index']); // Get all reviews for a specific product
+        Route::put('/{review_id}', [ReviewController::class, 'update']); // Update a review
+        Route::delete('/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
     });
 
     Route::prefix('blogs')->group(function () {
@@ -199,6 +181,30 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::delete('/{voucher_id}', [VoucherController::class, 'destroy']); // Delete a specific voucher
         // Route to change voucher status
         Route::post('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
+    });
+
+    Route::prefix('surveys')->group(function () {
+        Route::post('/', [SurveyController::class, 'store']); // Create a new survey
+        Route::get('/', [SurveyController::class, 'index']); // List all surveys
+        Route::get('/{survey_id}', [SurveyController::class, 'show']); // Show a specific survey
+        Route::put('/{survey_id}', [SurveyController::class, 'update']); // Update a specific survey
+        Route::delete('/{survey_id}', [SurveyController::class, 'destroy']); // Delete a specific survey
+    });
+
+    // Question management routes
+    Route::prefix('surveys/{survey_id}/questions')->group(function () {
+        Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
+        Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
+        Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
+        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
+        Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
+    });
+
+    // Response management routes (optional, if admins need to see all responses)
+    Route::prefix('responses')->group(function () {
+        Route::get('/', [ResponseController::class, 'index']); // List all responses
+        Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
+        Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
     });
 
 });

@@ -9,19 +9,31 @@ class Question extends Model
 {
     use HasFactory;
 
+    protected $table = 'questions';
+    protected $primaryKey = 'question_id';
+
     protected $fillable = [
         'survey_id',
         'question_text',
-        'question_type',
-        'options', // Include options in the fillable array
+        'type',
+        'options',
+        'category'
     ];
 
+    // Cast the options field to and from JSON
     protected $casts = [
-        'options' => 'array', // Cast options to an array
+        'options' => 'array',
     ];
 
-    public function answers()
+    // Many-to-One relationship with the Survey table
+    public function survey()
     {
-        return $this->hasMany(Answer::class);
+        return $this->belongsTo(Survey::class, 'survey_id', 'survey_id');
+    }
+
+    // One-to-Many relationship with the Response table
+    public function responses()
+    {
+        return $this->hasMany(Response::class);
     }
 }

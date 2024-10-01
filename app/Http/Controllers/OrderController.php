@@ -52,6 +52,7 @@ class OrderController extends Controller
             // Calculate total amount
             $totalAmount = $subtotalOfCart + $shippingCost - $discountAmount;
 
+            // Create the order and set the initial status
             $order = Order::create([
                 'user_id' => $userId,
                 'subtotal_of_cart' => $subtotalOfCart,
@@ -61,7 +62,9 @@ class OrderController extends Controller
                 'shipping_name' => $shipping->name,
                 'shipping_cost' => $shippingCost,
                 'shipping_address' => $request->shipping_address,
+                'status' => 'Processing', // Set initial status
                 'payment_method' => $request->payment_method,
+
             ]);
 
             return response()->json([
@@ -75,6 +78,7 @@ class OrderController extends Controller
                 'discount_amount' => number_format($discountAmount, 2),
                 'total_amount' => number_format($order->total_amount, 2),
                 'payment_method' => $order->payment_method,
+                'status' => 'Processing', // Set initial status
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at,
                 'id' => $order->order_id,
@@ -106,6 +110,7 @@ class OrderController extends Controller
                     'shipping_cost' => number_format($order->shipping_cost, 2),
                     'total_amount' => number_format($order->total_amount, 2),
                     'payment_method' => $order->payment_method,
+                    'status' => $order->status, // Include the status in the response
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                 ];
@@ -115,6 +120,27 @@ class OrderController extends Controller
             return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
         } catch (Exception $e) {
             return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            // Validate the incoming request
+            $request->validate([
+                'status' => 'required|in:Processing,Shipping,Delivered,Completed', // Ensure valid status
+            ]);
+
+            // Find the order by ID
+            $order = Order::findOrFail($id);
+            $order->status = $request->status; // Update the status
+            $order->save(); // Save the changes
+
+            return response()->json(['message' => 'Order status updated successfully.', 'order' => $order], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Order not found'], 404);
+        } catch (Exception $e) {
+            return response()->json(['message' => 'An error occurred while updating the order status.', 'error' => $e->getMessage()], 500);
         }
     }
 }
