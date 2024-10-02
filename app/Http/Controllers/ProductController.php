@@ -74,7 +74,9 @@ class ProductController extends Controller
                 : round($product_data['price'], 2);
 
             // Initialize rating as null or 0 when creating a product
-            $product_data['rating'] = null;
+//            $product_data['rating'] = null;
+            $product_data['rating'] = $request->input('rating', 0);
+
 
             $product = Product::create($product_data);
 

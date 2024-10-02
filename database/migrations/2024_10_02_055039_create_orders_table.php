@@ -18,6 +18,7 @@ class CreateOrdersTable extends Migration
             $table->string('shipping_address'); // Shipping address
             $table->decimal('subtotal_of_cart', 10, 2); // Total cart value
             $table->decimal('total_amount', 10, 2); // Total payment amount
+            $table->enum('status', ['Processing', 'Shipping', 'Delivered', 'Completed'])->default('Processing');
             $table->enum('payment_method', ['Cash on Delivery', 'VNpay Payment']); // Enum for payment methods
             $table->timestamp('order_date')->useCurrent(); // Order date
             $table->timestamps();

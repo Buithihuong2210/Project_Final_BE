@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->enum('status', ['Processing', 'Shipping', 'Delivered', 'Completed'])->default('Processing')->after('payment_method');
+        Schema::table('products', function (Blueprint $table) {
+            $table->decimal('rating', 3, 2)->nullable()->change();
         });
     }
 
     public function down()
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('products', function (Blueprint $table) {
+            $table->decimal('rating', 3, 2)->nullable(false)->change();
         });
     }
 };

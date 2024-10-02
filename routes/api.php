@@ -21,6 +21,7 @@ use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\MoMoPaymentController;
 
 
 
@@ -113,7 +114,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [BlogController::class, 'showAll']);
         Route::put('/{blog}', [BlogController::class, 'updateUser']);
         Route::get('/{blog}', [BlogController::class, 'show']);
-
     });
 
     Route::prefix('comments')->group(function () {
@@ -211,6 +211,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
     });
 
+    Route::post('/momo-payment', [MoMoPaymentController::class, 'createPayment']);
 });
 
 
