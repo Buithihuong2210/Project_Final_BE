@@ -21,7 +21,7 @@ use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\MoMoPaymentController;
+use App\Http\Controllers\PaymentController;
 
 
 
@@ -211,7 +211,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
     });
 
-    Route::post('/momo-payment', [MoMoPaymentController::class, 'createPayment']);
+    Route::prefix('payments')->group(function () {
+        Route::post('/', [PaymentController::class, 'createPayment']); // Create a payment
+        Route::get('/success', [PaymentController::class, 'success'])->name('payment.success'); // Handle payment success
+        Route::post('/notify', [PaymentController::class, 'notify'])->name('payment.notify'); // Handle payment notifications
+    });
+
 });
 
 
