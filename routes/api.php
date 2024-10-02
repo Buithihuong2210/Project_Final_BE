@@ -65,6 +65,10 @@ Route::prefix('responses')->group(function () {
     Route::get('/', [ResponseController::class, 'index']); // List all responses
 });
 
+Route::prefix('users')->group(function () {
+    Route::get('/{id}', [UserController::class, 'getUserById']);
+});
+
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {

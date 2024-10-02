@@ -95,7 +95,7 @@ class ShippingController extends Controller
             $shipping->delete();
 
             // Return a 204 No Content response
-            return response()->json(null, 204);
+            return response()->json(['message' => "Shipping {$shipping_id} deleted successfully"], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // Handle the case where the shipping record is not found
             return response()->json([

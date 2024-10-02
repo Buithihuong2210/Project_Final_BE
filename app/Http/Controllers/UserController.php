@@ -76,4 +76,22 @@ class UserController extends Controller
         // Optionally, return a response or redirect
         return response()->json(['message' => 'User deleted successfully']);
     }
+    public function getUserById($id)
+    {
+        // Find the user by ID
+        $user = User::find($id);
+
+        // Check if the user exists
+        if (is_null($user)) {
+            return response()->json([
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        }
+
+        // Return the user information
+        return response()->json([
+            'user' => $user
+        ], 200);
+    }
+
 }
