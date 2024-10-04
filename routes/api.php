@@ -109,9 +109,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('reviews')->group(function () {
         Route::post('/{product_id}', [ReviewController::class, 'store']); // Create a review for a product
-        Route::get('/product/{product_id}', [ReviewController::class, 'index']); // Get all reviews for a specific product
         Route::put('/{review_id}', [ReviewController::class, 'update']); // Update a review
         Route::delete('/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
+        Route::get('/product/{product_id}', [ReviewController::class, 'getReviewsByProduct']);
+        Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product
     });
 
     Route::prefix('blogs')->group(function () {
