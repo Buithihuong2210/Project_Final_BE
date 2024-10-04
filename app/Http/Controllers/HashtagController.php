@@ -16,29 +16,29 @@ class HashtagController extends Controller
 
     public function store(Request $request)
     {
+        // Validate the incoming request
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
         try {
-            $request->validate([
-                'name' => 'required|string|unique:hashtags,name',
-                'description' => 'nullable|string',
+            // Create a new hashtag
+            $hashtag = Hashtag::create([
+                'name' => $request->input('name'),
             ]);
 
-            // Create the hashtag
-            $hashtag = Hashtag::create($request->all());
-
-            // Prepare the response with reordered fields
-            $response = [
-                'hashtag_id' => $hashtag->hashtag_id,
+            // Return the response
+            return response()->json([
+                'hashtag_id' => $hashtag->id,
                 'name' => $hashtag->name,
-                'description' => $hashtag->description,
-                'created_at' => $hashtag->created_at->toISOString(),
-                'updated_at' => $hashtag->updated_at->toISOString(),
-            ];
+                'created_at' => $hashtag->created_at,
+                'updated_at' => $hashtag->updated_at,
+            ], 201);
 
-            return response()->json($response, 201);
-        } catch (ValidationException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred'], 500);
+            // Log the actual error message
+            \Log::error('Error creating hashtag: ' . $e->getMessage());
+            return response()->json(['error' => 'Could not create hashtag. Details: ' . $e->getMessage()], 500);
         }
     }
 
@@ -55,21 +55,27 @@ class HashtagController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            // Update validation to use the correct primary key (id)
             $request->validate([
-                'name' => 'required|string|unique:hashtags,name,' . $id . ',hashtag_id',
-                'description' => 'nullable|string',
+                'name' => 'required|string|unique:hashtags,name,' . $id . ',id', // Change 'hashtag_id' to 'id'
             ]);
 
+            // Find the hashtag by id
             $hashtag = Hashtag::findOrFail($id);
+
+            // Update the hashtag
             $hashtag->update($request->all());
 
+            // Return the updated hashtag
             return response()->json($hashtag);
+
         } catch (ValidationException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Hashtag not found'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred'], 500);
+            // Log the exact error message for easier debugging
+            return response()->json(['message' => 'An error occurred', 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -96,4 +102,29 @@ class HashtagController extends Controller
             return response()->json(['message' => 'An error occurred'], 500);
         }
     }
+
+    public function getByID($id)
+    {
+        try {
+            // Attempt to find the hashtag by its ID
+            $hashtag = Hashtag::findOrFail($id);
+
+            // Prepare the response with the hashtag data
+            $response = [
+                'hashtag_id' => $hashtag->id, // Make sure to use 'id' instead of 'hashtag_id'
+                'name' => $hashtag->name,
+                'created_at' => $hashtag->created_at->toISOString(),
+                'updated_at' => $hashtag->updated_at->toISOString(),
+            ];
+
+            // Return the response with the found hashtag data
+            return response()->json($response, 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Hashtag not found'], 404);
+        } catch (\Exception $e) {
+            // Log the exact error message for easier debugging
+            return response()->json(['message' => 'An error occurred', 'details' => $e->getMessage()], 500);
+        }
+    }
+
 }

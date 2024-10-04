@@ -17,6 +17,7 @@ class Blog extends Model
         'thumbnail',
         'content',
         'status',
+        'like'
     ];
 
 
