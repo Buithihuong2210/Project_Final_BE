@@ -16,16 +16,17 @@ class BlogController extends Controller
         try {
             $blogs = Blog::with('hashtags')->get();
 
-            // Format the blogs with only hashtag names
             $blogsWithHashtags = $blogs->map(function ($blog) {
                 return [
-                    'id' => $blog->blog_id,
+                    'blog_id' => $blog->blog_id,
                     'title' => $blog->title,
                     'content' => $blog->content,
                     'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'status' => $blog->status,
                     'created_at' => $blog->created_at,
                     'updated_at' => $blog->updated_at,
-                    'hashtags' => $blog->hashtags->pluck('name'), // Extract only the names
+                    'hashtags' => $blog->hashtags->pluck('name')->toArray(), // Lấy tên hashtag dưới dạng mảng
                 ];
             });
 
@@ -86,19 +87,17 @@ class BlogController extends Controller
             // Reload blog with hashtags relationship to include in the response
             $blog->load('hashtags');
 
-            // Return the blog with hashtags as part of the blog object
+            // Return the blog with hashtags directly, without the outer "blog" key
             return response()->json([
-                'blog' => [
-                    'blog_id' => $blog->blog_id,
-                    'title' => $blog->title,
-                    'content' => $blog->content,
-                    'thumbnail' => $blog->thumbnail,
-                    'like' => $blog->like,
-                    'status' => $blog->status,
-                    'created_at' => $blog->created_at,
-                    'updated_at' => $blog->updated_at,
-                    'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
-                ]
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'like' => $blog->like,
+                'status' => $blog->status,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
             ], 201);
 
         } catch (ValidationException $e) {
@@ -118,24 +117,24 @@ class BlogController extends Controller
     public function show($blog_id)
     {
         try {
+            // Retrieve the blog using the provided blog_id
             $blog = Blog::findOrFail($blog_id);
 
             // Get hashtags associated with the blog
             $hashtags = $blog->hashtags->pluck('name');
 
+            // Return the blog details without the outer "blog" key
             return response()->json([
-                'blog' => [
-                    'blog_id' => $blog->blog_id,
-                    'title' => $blog->title,
-                    'user_id' => $blog->user_id,
-                    'content' => $blog->content,
-                    'thumbnail' => $blog->thumbnail,
-                    'like' => $blog->like,
-                    'status' => $blog->status,
-                    'created_at' => $blog->created_at,
-                    'updated_at' => $blog->updated_at,
-                    'hashtags' => $hashtags,
-                ],
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'user_id' => $blog->user_id,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'like' => $blog->like,
+                'status' => $blog->status,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $hashtags,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -145,12 +144,11 @@ class BlogController extends Controller
         }
     }
 
-
-
     // Update a blog as a regular user (only if the blog is in draft status)
     public function updateUser(Request $request, $blog_id)
     {
         try {
+            // Retrieve the blog using the provided blog_id
             $blog = Blog::findOrFail($blog_id);
 
             // Check if the authenticated user is the owner of the blog and if the status is draft
@@ -189,20 +187,18 @@ class BlogController extends Controller
             // Reload the blog with the hashtags relationship
             $blog->load('hashtags');
 
-            // Return the blog with the hashtags as part of the blog object
+            // Return the blog details in the desired format without the outer "blog" key
             return response()->json([
-                'blog' => [
-                    'blog_id' => $blog->blog_id,
-                    'title' => $blog->title,
-                    'content' => $blog->content,
-                    'thumbnail' => $blog->thumbnail,
-                    'status' => $blog->status,
-                    'like' => $blog->like,
-                    'created_at' => $blog->created_at,
-                    'updated_at' => $blog->updated_at,
-                    'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
-                ]
-            ]);
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'status' => $blog->status,
+                'like' => $blog->like,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
+            ], 200);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
