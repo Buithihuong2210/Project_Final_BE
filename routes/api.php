@@ -229,12 +229,3 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     });
 
 });
-
-
-
-
-
-
-
-
-
