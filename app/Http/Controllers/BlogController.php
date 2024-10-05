@@ -14,9 +14,22 @@ class BlogController extends Controller
     public function showAll()
     {
         try {
-            $blogs = Blog::all();
+            $blogs = Blog::with('hashtags')->get();
 
-            return response()->json($blogs, 200);
+            // Format the blogs with only hashtag names
+            $blogsWithHashtags = $blogs->map(function ($blog) {
+                return [
+                    'id' => $blog->id,
+                    'title' => $blog->title,
+                    'content' => $blog->content,
+                    'thumbnail' => $blog->thumbnail,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                    'hashtags' => $blog->hashtags->pluck('name'), // Extract only the names
+                ];
+            });
+
+            return response()->json($blogsWithHashtags, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while retrieving blogs',
@@ -24,6 +37,7 @@ class BlogController extends Controller
             ], 500);
         }
     }
+
 
     // Create a new blog
     public function store(Request $request)
@@ -58,6 +72,7 @@ class BlogController extends Controller
 
             // Handle hashtags
             $hashtagIds = [];
+
             foreach ($hashtags as $hashtagName) {
                 $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
                 $hashtag->increment('usage_count');
@@ -66,7 +81,11 @@ class BlogController extends Controller
 
             $blog->hashtags()->attach($hashtagIds);
 
-            return response()->json($blog, 201);
+            // Return the blog along with only the hashtag names
+            return response()->json([
+                'blog' => $blog,
+                'hashtags' => $hashtags, // Chỉ bao gồm tên hashtag
+            ], 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -84,8 +103,27 @@ class BlogController extends Controller
     public function show($blog_id)
     {
         try {
+            // Fetch the blog with its associated hashtags
             $blog = Blog::findOrFail($blog_id);
-            return response()->json($blog);
+
+            // Extract only the hashtag names
+            $hashtagsNames = $blog->hashtags()->pluck('name');
+
+            // Return the response with the desired structure
+            return response()->json([
+                'blog' => [
+                    'blog_id' => $blog->blog_id,
+                    'title' => $blog->title,
+                    'user_id' => $blog->user_id,
+                    'content' => $blog->content,
+                    'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'status' => $blog->status,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                ],
+                'hashtags' => $hashtagsNames,
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Blog not found',
@@ -94,32 +132,54 @@ class BlogController extends Controller
         }
     }
 
+
+
     // Update a blog as a regular user (only if the blog is in draft status)
     public function updateUser(Request $request, $blog_id)
     {
         try {
             $blog = Blog::findOrFail($blog_id);
 
+            // Check if the authenticated user is the owner of the blog and if the status is draft
             if (auth()->user()->id !== $blog->user_id || $blog->status !== 'draft') {
                 return response()->json([
                     'message' => 'Unauthorized or blog is not in draft status',
                 ], 403);
             }
 
+            // Validate the request data
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'thumbnail' => 'url',
+                'hashtags' => 'array',
+                'hashtags.*' => 'string|max:50',
             ])->validate();
 
             // Update the blog
             $blog->update([
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
-                'thumbnail' => $validatedData['thumbnail'],
+                'thumbnail' => $validatedData['thumbnail'] ?? '',
             ]);
 
-            return response()->json($blog);
+            // Update hashtags
+            $blog->hashtags()->detach();
+            $hashtags = $request->input('hashtags', []);
+
+            foreach ($hashtags as $hashtagName) {
+                $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
+                $hashtag->increment('usage_count');
+                $blog->hashtags()->attach($hashtag->id);
+            }
+
+            // Get only hashtag names
+            $hashtagsNames = $blog->hashtags->pluck('name');
+
+            return response()->json([
+                'blog' => $blog,
+                'hashtags' => $hashtagsNames,
+            ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -150,6 +210,8 @@ class BlogController extends Controller
                 'content' => 'required|string',
                 'status' => 'required|in:draft,published',
                 'thumbnail' => 'url',
+                'hashtags' => 'array',
+                'hashtags.*' => 'string|max:50',
             ])->validate();
 
             // Update the blog
@@ -160,7 +222,23 @@ class BlogController extends Controller
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
             ]);
 
-            return response()->json($blog);
+            // Update hashtags
+            $blog->hashtags()->detach();
+            $hashtags = $request->input('hashtags', []);
+
+            foreach ($hashtags as $hashtagName) {
+                $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
+                $hashtag->increment('usage_count');
+                $blog->hashtags()->attach($hashtag->id);
+            }
+
+            // Get only hashtag names
+            $hashtagsNames = $blog->hashtags->pluck('name');
+
+            return response()->json([
+                'blog' => $blog,
+                'hashtags' => $hashtagsNames,
+            ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
