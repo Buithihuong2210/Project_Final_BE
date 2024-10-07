@@ -94,10 +94,14 @@ class BlogController extends Controller
             // Attach hashtags to the blog
             $blog->hashtags()->attach($hashtagIds);
 
+<<<<<<< HEAD
             // Reload blog with hashtags and user relationship to include in the response
             $blog->load(['hashtags', 'user']);
 
             // Return the blog with hashtags and user information directly, without the outer "blog" key
+=======
+            // Return the blog along with only the hashtag names
+>>>>>>> e2448c61e494eb0391bdde38d84081f992ad73d6
             return response()->json([
                 'blog_id' => $blog->blog_id,
                 'title' => $blog->title,
@@ -181,8 +185,8 @@ class BlogController extends Controller
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
-                'thumbnail' => 'nullable|url',
-                'hashtags' => 'nullable|array',
+                'thumbnail' => 'url',
+                'hashtags' => 'array',
                 'hashtags.*' => 'string|max:50',
             ])->validate();
 
@@ -260,8 +264,7 @@ class BlogController extends Controller
                 'status' => $validatedData['status'],
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
             ]);
-
-            // Update hashtags
+// Update hashtags
             $blog->hashtags()->detach();
             $hashtags = $validatedData['hashtags'] ?? [];
 
@@ -346,7 +349,7 @@ class BlogController extends Controller
             $blog->increment('like');
 
             return response()->json([
-                'message' => 'Blog like updated successfully',
+'message' => 'Blog like updated successfully',
                 'blog' => $blog,
             ], 200);
         } catch (\Exception $e) {

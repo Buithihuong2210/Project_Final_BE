@@ -77,7 +77,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // Survey routes for users
-    Route::prefix('surveys')->group(function () {
+Route::prefix('surveys')->group(function () {
         Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
     });
 
@@ -131,7 +131,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('hashtags')->group(function () {
         Route::get('/', [HashtagController::class, 'index']); // List all hashtags
-        Route::get('/{hashtag_id}', [HashtagController::class, 'show']); // Show a specific hashtag
+Route::get('/{hashtag_id}', [HashtagController::class, 'show']); // Show a specific hashtag
         Route::get('/by-id/{hashtag_id}', [HashtagController::class, 'getByID']); // Get hashtag by ID
     });
 });
@@ -180,7 +180,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::post('/{blog_id}/likes', [BlogController::class, 'updateLike']);
     });
     Route::prefix('shippings')->group(function () {
-        Route::get('/', [ShippingController::class, 'index']); // List all shipping records
+Route::get('/', [ShippingController::class, 'index']); // List all shipping records
         Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
         Route::post('/', [ShippingController::class, 'store']); // Create a new shipping record
         Route::put('/{shipping_id}', [ShippingController::class, 'update']); // Update a shipping record
@@ -223,7 +223,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     });
 
     Route::prefix('payments')->group(function () {
-        Route::post('/', [PaymentController::class, 'createPayment']); // Create a payment
+Route::post('/', [PaymentController::class, 'createPayment']); // Create a payment
         Route::get('/success', [PaymentController::class, 'success'])->name('payment.success'); // Handle payment success
         Route::post('/notify', [PaymentController::class, 'notify'])->name('payment.notify'); // Handle payment notifications
     });
