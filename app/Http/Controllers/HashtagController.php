@@ -6,6 +6,8 @@ use App\Models\Hashtag;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+
 
 class HashtagController extends Controller
 {
@@ -103,27 +105,34 @@ class HashtagController extends Controller
         }
     }
 
+// Retrieve all blogs related to a specific hashtag
     public function getByID($id)
     {
         try {
-            // Attempt to find the hashtag by its ID
-            $hashtag = Hashtag::findOrFail($id);
+            // Tìm tất cả các blog liên quan đến hashtag thông qua bảng hashtag_blog
+            $blogs = DB::table('hashtag_blog')
+                ->join('blogs', 'hashtag_blog.blog_id', '=', 'blogs.blog_id') // Sửa 'blogs.id' thành 'blogs.blog_id'
+                ->where('hashtag_blog.hashtag_id', $id)
+                ->select('blogs.*')
+                ->get();
 
-            // Prepare the response with the hashtag data
-            $response = [
-                'hashtag_id' => $hashtag->id, // Make sure to use 'id' instead of 'hashtag_id'
-                'name' => $hashtag->name,
-                'created_at' => $hashtag->created_at->toISOString(),
-                'updated_at' => $hashtag->updated_at->toISOString(),
-            ];
 
-            // Return the response with the found hashtag data
-            return response()->json($response, 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Hashtag not found'], 404);
+            // Kiểm tra nếu không có blog nào được tìm thấy
+            if ($blogs->isEmpty()) {
+                return response()->json([
+                    'message' => 'No blogs found for this hashtag.',
+                ], 404);
+            }
+
+            // Trả về danh sách blog
+            return response()->json($blogs, 200);
+
         } catch (\Exception $e) {
-            // Log the exact error message for easier debugging
-            return response()->json(['message' => 'An error occurred', 'details' => $e->getMessage()], 500);
+            // Xử lý lỗi và trả về phản hồi thất bại
+            return response()->json([
+                'message' => 'Error retrieving blogs.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 

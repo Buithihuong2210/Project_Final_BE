@@ -16,16 +16,17 @@ class BlogController extends Controller
         try {
             $blogs = Blog::with('hashtags')->get();
 
-            // Format the blogs with only hashtag names
             $blogsWithHashtags = $blogs->map(function ($blog) {
                 return [
-                    'id' => $blog->id,
+                    'blog_id' => $blog->blog_id,
                     'title' => $blog->title,
                     'content' => $blog->content,
                     'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'status' => $blog->status,
                     'created_at' => $blog->created_at,
                     'updated_at' => $blog->updated_at,
-                    'hashtags' => $blog->hashtags->pluck('name'), // Extract only the names
+                    'hashtags' => $blog->hashtags->pluck('name')->toArray(), // Lấy tên hashtag dưới dạng mảng
                 ];
             });
 
@@ -45,10 +46,11 @@ class BlogController extends Controller
         try {
             $isAdmin = auth()->user()->admin;
 
+            // Validation rules
             $rules = [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
-                'thumbnail' => 'url',
+                'thumbnail' => 'nullable|url',
                 'hashtags' => 'nullable|array',
                 'hashtags.*' => 'string|max:255',
             ];
@@ -57,35 +59,46 @@ class BlogController extends Controller
                 $rules['status'] = 'required|in:draft,published';
             }
 
+            // Validate the request
             $validatedData = Validator::make($request->all(), $rules)->validate();
             $hashtags = $validatedData['hashtags'] ?? [];
 
-            // Create a new blog
+            // Create the blog
             $blog = Blog::create([
                 'title' => $validatedData['title'],
                 'user_id' => auth()->id(),
                 'content' => $validatedData['content'],
                 'status' => $isAdmin ? $validatedData['status'] : 'draft',
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
-                'like' => 0,  // Default value for like
+                'like' => 0,  // Default value for likes
             ]);
 
             // Handle hashtags
             $hashtagIds = [];
-
             foreach ($hashtags as $hashtagName) {
                 $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
                 $hashtag->increment('usage_count');
                 $hashtagIds[] = $hashtag->id;
             }
 
+            // Attach hashtags to the blog
             $blog->hashtags()->attach($hashtagIds);
 
-            // Return the blog along with only the hashtag names
+            // Reload blog with hashtags relationship to include in the response
+            $blog->load('hashtags');
+// Return the blog with hashtags directly, without the outer "blog" key
             return response()->json([
-                'blog' => $blog,
-                'hashtags' => $hashtags, // Chỉ bao gồm tên hashtag
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'like' => $blog->like,
+                'status' => $blog->status,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
             ], 201);
+
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -103,27 +116,25 @@ class BlogController extends Controller
     public function show($blog_id)
     {
         try {
-            // Fetch the blog with its associated hashtags
+            // Retrieve the blog using the provided blog_id
             $blog = Blog::findOrFail($blog_id);
 
-            // Extract only the hashtag names
-            $hashtagsNames = $blog->hashtags()->pluck('name');
+            // Get hashtags associated with the blog
+            $hashtags = $blog->hashtags->pluck('name');
 
-            // Return the response with the desired structure
+            // Return the blog details without the outer "blog" key
             return response()->json([
-                'blog' => [
-                    'blog_id' => $blog->blog_id,
-                    'title' => $blog->title,
-                    'user_id' => $blog->user_id,
-                    'content' => $blog->content,
-                    'thumbnail' => $blog->thumbnail,
-                    'like' => $blog->like,
-                    'status' => $blog->status,
-                    'created_at' => $blog->created_at,
-                    'updated_at' => $blog->updated_at,
-                ],
-                'hashtags' => $hashtagsNames,
-            ]);
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'user_id' => $blog->user_id,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'like' => $blog->like,
+                'status' => $blog->status,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $hashtags,
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Blog not found',
@@ -132,12 +143,11 @@ class BlogController extends Controller
         }
     }
 
-
-
     // Update a blog as a regular user (only if the blog is in draft status)
     public function updateUser(Request $request, $blog_id)
     {
         try {
+            // Retrieve the blog using the provided blog_id
             $blog = Blog::findOrFail($blog_id);
 
             // Check if the authenticated user is the owner of the blog and if the status is draft
@@ -151,8 +161,8 @@ class BlogController extends Controller
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
-                'thumbnail' => 'url',
-                'hashtags' => 'array',
+                'thumbnail' => 'nullable|url',
+'hashtags' => 'nullable|array',
                 'hashtags.*' => 'string|max:50',
             ])->validate();
 
@@ -165,7 +175,7 @@ class BlogController extends Controller
 
             // Update hashtags
             $blog->hashtags()->detach();
-            $hashtags = $request->input('hashtags', []);
+            $hashtags = $validatedData['hashtags'] ?? [];
 
             foreach ($hashtags as $hashtagName) {
                 $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
@@ -173,13 +183,21 @@ class BlogController extends Controller
                 $blog->hashtags()->attach($hashtag->id);
             }
 
-            // Get only hashtag names
-            $hashtagsNames = $blog->hashtags->pluck('name');
+            // Reload the blog with the hashtags relationship
+            $blog->load('hashtags');
 
+            // Return the blog details in the desired format without the outer "blog" key
             return response()->json([
-                'blog' => $blog,
-                'hashtags' => $hashtagsNames,
-            ]);
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'content' => $blog->content,
+                'thumbnail' => $blog->thumbnail,
+                'status' => $blog->status,
+                'like' => $blog->like,
+                'created_at' => $blog->created_at,
+                'updated_at' => $blog->updated_at,
+                'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
+            ], 200);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -205,12 +223,13 @@ class BlogController extends Controller
 
             $blog = Blog::findOrFail($blog_id);
 
+            // Validate the request data
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'status' => 'required|in:draft,published',
-                'thumbnail' => 'url',
-                'hashtags' => 'array',
+                'thumbnail' => 'nullable|url',
+                'hashtags' => 'nullable|array',
                 'hashtags.*' => 'string|max:50',
             ])->validate();
 
@@ -221,10 +240,9 @@ class BlogController extends Controller
                 'status' => $validatedData['status'],
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
             ]);
-
-            // Update hashtags
+// Update hashtags
             $blog->hashtags()->detach();
-            $hashtags = $request->input('hashtags', []);
+            $hashtags = $validatedData['hashtags'] ?? [];
 
             foreach ($hashtags as $hashtagName) {
                 $hashtag = Hashtag::firstOrCreate(['name' => $hashtagName]);
@@ -232,12 +250,22 @@ class BlogController extends Controller
                 $blog->hashtags()->attach($hashtag->id);
             }
 
-            // Get only hashtag names
-            $hashtagsNames = $blog->hashtags->pluck('name');
+            // Reload the blog with its hashtags relationship
+            $blog->load('hashtags');
 
+            // Return the blog with the hashtags included in the blog object
             return response()->json([
-                'blog' => $blog,
-                'hashtags' => $hashtagsNames,
+                'blog' => [
+                    'blog_id' => $blog->id,
+                    'title' => $blog->title,
+                    'content' => $blog->content,
+                    'status' => $blog->status,
+                    'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                    'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
+                ]
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -297,7 +325,7 @@ class BlogController extends Controller
             $blog->increment('like');
 
             return response()->json([
-                'message' => 'Blog like updated successfully',
+'message' => 'Blog like updated successfully',
                 'blog' => $blog,
             ], 200);
         } catch (\Exception $e) {
