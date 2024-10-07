@@ -84,9 +84,7 @@ class BlogController extends Controller
             // Attach hashtags to the blog
             $blog->hashtags()->attach($hashtagIds);
 
-            // Reload blog with hashtags relationship to include in the response
-            $blog->load('hashtags');
-// Return the blog with hashtags directly, without the outer "blog" key
+            // Return the blog along with only the hashtag names
             return response()->json([
                 'blog_id' => $blog->blog_id,
                 'title' => $blog->title,
@@ -161,8 +159,8 @@ class BlogController extends Controller
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
-                'thumbnail' => 'nullable|url',
-'hashtags' => 'nullable|array',
+                'thumbnail' => 'url',
+                'hashtags' => 'array',
                 'hashtags.*' => 'string|max:50',
             ])->validate();
 
