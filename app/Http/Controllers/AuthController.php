@@ -13,7 +13,6 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-
         try {
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
@@ -25,13 +24,12 @@ class AuthController extends Controller
                 'address' => 'required|string|max:255',
             ]);
         } catch (\Throwable $th) {
-            // die('huongxinhdep');
             return response()->json([
-                // 'access_token' => $token,
                 'message' => $th->getMessage(),
-            ]);
+            ], 400);
         }
 
+        // Create the user
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
@@ -42,12 +40,21 @@ class AuthController extends Controller
             'address' => $validatedData['address'],
         ]);
 
+        // Generate a token for the user
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Return the user data without wrapping it in a 'user' object
         return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'dob' => $user->dob,
+            'gender' => $user->gender,
+            'address' => $user->address,
             'access_token' => $token,
             'token_type' => 'Bearer',
-        ]);
+        ], 201);
     }
 
     public function login(Request $request)

@@ -14,9 +14,11 @@ class BlogController extends Controller
     public function showAll()
     {
         try {
-            $blogs = Blog::with('hashtags')->get();
+            // Retrieve blogs with related hashtags and user information
+            $blogs = Blog::with(['hashtags', 'user'])->get();
 
-            $blogsWithHashtags = $blogs->map(function ($blog) {
+            // Map the blogs to include hashtags and user information
+            $blogsWithHashtagsAndUser = $blogs->map(function ($blog) {
                 return [
                     'blog_id' => $blog->blog_id,
                     'title' => $blog->title,
@@ -26,11 +28,20 @@ class BlogController extends Controller
                     'status' => $blog->status,
                     'created_at' => $blog->created_at,
                     'updated_at' => $blog->updated_at,
-                    'hashtags' => $blog->hashtags->pluck('name')->toArray(), // Lấy tên hashtag dưới dạng mảng
+                    'hashtags' => $blog->hashtags->pluck('name')->toArray(), // Get hashtags as an array of names
+                    'user' => [
+                        'id' => $blog->user->id,
+                        'name' => $blog->user->name,
+                        'email' => $blog->user->email,
+                        'dob' => $blog->user->dob,
+                        'phone' => $blog->user->phone,
+                        'gender' => $blog->user->gender,
+                    ]
                 ];
             });
 
-            return response()->json($blogsWithHashtags, 200);
+            // Return the blogs with user and hashtags in the response
+            return response()->json($blogsWithHashtagsAndUser, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while retrieving blogs',
@@ -38,7 +49,6 @@ class BlogController extends Controller
             ], 500);
         }
     }
-
 
     // Create a new blog
     public function store(Request $request)
@@ -84,10 +94,10 @@ class BlogController extends Controller
             // Attach hashtags to the blog
             $blog->hashtags()->attach($hashtagIds);
 
-            // Reload blog with hashtags relationship to include in the response
-            $blog->load('hashtags');
+            // Reload blog with hashtags and user relationship to include in the response
+            $blog->load(['hashtags', 'user']);
 
-            // Return the blog with hashtags directly, without the outer "blog" key
+            // Return the blog with hashtags and user information directly, without the outer "blog" key
             return response()->json([
                 'blog_id' => $blog->blog_id,
                 'title' => $blog->title,
@@ -98,6 +108,11 @@ class BlogController extends Controller
                 'created_at' => $blog->created_at,
                 'updated_at' => $blog->updated_at,
                 'hashtags' => $blog->hashtags->pluck('name'), // Include hashtag names
+                'user' => [
+                    'id' => $blog->user->id,
+                    'name' => $blog->user->name,
+                    'email' => $blog->user->email,
+                ], // Include user information
             ], 201);
 
         } catch (ValidationException $e) {
@@ -117,17 +132,16 @@ class BlogController extends Controller
     public function show($blog_id)
     {
         try {
-            // Retrieve the blog using the provided blog_id
-            $blog = Blog::findOrFail($blog_id);
+            // Retrieve the blog using the provided blog_id and load the related user and hashtags
+            $blog = Blog::with('user', 'hashtags')->findOrFail($blog_id);
 
             // Get hashtags associated with the blog
             $hashtags = $blog->hashtags->pluck('name');
 
-            // Return the blog details without the outer "blog" key
+            // Return the blog details including user information, without the outer "blog" key
             return response()->json([
                 'blog_id' => $blog->blog_id,
                 'title' => $blog->title,
-                'user_id' => $blog->user_id,
                 'content' => $blog->content,
                 'thumbnail' => $blog->thumbnail,
                 'like' => $blog->like,
@@ -135,6 +149,11 @@ class BlogController extends Controller
                 'created_at' => $blog->created_at,
                 'updated_at' => $blog->updated_at,
                 'hashtags' => $hashtags,
+                'user' => [
+                    'id' => $blog->user->id,
+                    'name' => $blog->user->name,
+                    'email' => $blog->user->email,
+                ], // Include user information
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

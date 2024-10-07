@@ -13,10 +13,8 @@ class UserController extends Controller
         // Retrieve all users
         $users = User::all();
 
-        // Return the users in JSON format with a 200 status
-        return response()->json([
-            'users' => $users
-        ], 200);
+        // Return the users directly in JSON format with a 200 status
+        return response()->json($users, 200);
     }
 
     public function update(Request $request, $id)
@@ -52,11 +50,10 @@ class UserController extends Controller
 
         $user->save();
 
-        // Return a response
+        // Return a response without wrapping in 'user' object
         return response()->json([
-            'message' => "User {$id} updated successfully",
-            'user' => $user
-        ], 200);
+                'message' => "User {$id} updated successfully",
+            ] + $user->toArray(), 200); // Merging user data directly into response
     }
 
     public function destroy($id)
@@ -88,10 +85,9 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Return the user information
-        return response()->json([
-            'user' => $user
-        ], 200);
+        // Return the user information without wrapping it in a 'user' object
+        return response()->json($user, 200);
     }
+
 
 }

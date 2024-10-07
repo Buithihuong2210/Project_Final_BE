@@ -106,29 +106,29 @@ class HashtagController extends Controller
     }
 
 // Retrieve all blogs related to a specific hashtag
+
     public function getByID($id)
     {
         try {
-            // Tìm tất cả các blog liên quan đến hashtag thông qua bảng hashtag_blog
+            // Find all blogs related to the hashtag through the hashtag_blog table
             $blogs = DB::table('hashtag_blog')
-                ->join('blogs', 'hashtag_blog.blog_id', '=', 'blogs.blog_id') // Sửa 'blogs.id' thành 'blogs.blog_id'
+                ->join('blogs', 'hashtag_blog.blog_id', '=', 'blogs.blog_id')
                 ->where('hashtag_blog.hashtag_id', $id)
                 ->select('blogs.*')
                 ->get();
 
-
-            // Kiểm tra nếu không có blog nào được tìm thấy
+            // Check if no blogs were found
             if ($blogs->isEmpty()) {
                 return response()->json([
                     'message' => 'No blogs found for this hashtag.',
                 ], 404);
             }
 
-            // Trả về danh sách blog
+            // Return the list of blogs
             return response()->json($blogs, 200);
 
         } catch (\Exception $e) {
-            // Xử lý lỗi và trả về phản hồi thất bại
+            // Handle the error and return a failed response
             return response()->json([
                 'message' => 'Error retrieving blogs.',
                 'error' => $e->getMessage(),
