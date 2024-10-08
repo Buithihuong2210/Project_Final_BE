@@ -81,7 +81,7 @@ class BlogController extends Controller
                 'content' => $validatedData['content'],
                 'status' => $isAdmin ? $validatedData['status'] : 'draft',
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
-                'like' => 0,  // Default value for likes
+              
             ]);
 
             // Handle hashtags
