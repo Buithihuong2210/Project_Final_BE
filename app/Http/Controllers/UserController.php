@@ -28,6 +28,7 @@ class UserController extends Controller
                 'dob' => 'date',
                 'gender' => 'string|in:male,female,other|max:255',
                 'image' => 'string|url|max:255',
+                'address' => 'string|max:255',
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -48,6 +49,7 @@ class UserController extends Controller
         $user->dob = $request->input('dob');
         $user->gender = $request->input('gender');
         $user->image = $request->input('image');
+        $user->address = $request->input('address');
 
         $user->save();
 
