@@ -89,6 +89,47 @@ class UserController extends Controller
         // Return the user information without wrapping it in a 'user' object
         return response()->json($user, 200);
     }
+
+    public function getUserData(Request $request)
+    {
+        try {
+            // Retrieve the authenticated user
+            $user = $request->user();
+
+            // Check if the user exists
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            // Return user data
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'dob' => $user->dob,
+                'gender' => $user->gender,
+                'address' => $user->address,
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Handle general exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving user data.',
+                'error' => $e->getMessage()
+            ], 500);
+        } catch (\Throwable $th) {
+            // Handle throwable errors
+            return response()->json([
+                'message' => 'A serious error occurred while retrieving user data.',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function changePassword(Request $request)
     {
         try {
