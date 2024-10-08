@@ -44,7 +44,7 @@ class PasswordResetController extends Controller
     // Function to send the reset email
     private function sendResetEmail($email, $token)
     {
-        $resetLink = 'http://localhost:3000/password/reset?token=' . $token;
+        $resetLink = 'http://localhost:5173/password/reset?token=' . $token;
         Mail::send('emails.passwordReset', ['resetLink' => $resetLink], function ($message) use ($email) {
             $message->to($email)
                 ->subject('Reset Password Notification');

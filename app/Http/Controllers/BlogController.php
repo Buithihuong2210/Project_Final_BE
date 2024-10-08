@@ -36,6 +36,7 @@ class BlogController extends Controller
                         'dob' => $blog->user->dob,
                         'phone' => $blog->user->phone,
                         'gender' => $blog->user->gender,
+                        'image' => $blog->user->image,
                     ]
                 ];
             });
@@ -95,6 +96,10 @@ class BlogController extends Controller
             $blog->hashtags()->attach($hashtagIds);
 
             // Return the blog along with only the hashtag names
+            // Reload blog with hashtags and user relationship to include in the response
+            $blog->load(['hashtags', 'user']);
+
+            // Return the blog with hashtags and user information directly, without the outer "blog" key
             return response()->json([
                 'blog_id' => $blog->blog_id,
                 'title' => $blog->title,
@@ -109,7 +114,11 @@ class BlogController extends Controller
                     'id' => $blog->user->id,
                     'name' => $blog->user->name,
                     'email' => $blog->user->email,
-                ], // Include user information
+                    'dob' => $blog->user->dob,
+                    'phone' => $blog->user->phone,
+                    'gender' => $blog->user->gender,
+                    'image' => $blog->user->image,
+                ],
             ], 201);
 
         } catch (ValidationException $e) {
@@ -150,7 +159,11 @@ class BlogController extends Controller
                     'id' => $blog->user->id,
                     'name' => $blog->user->name,
                     'email' => $blog->user->email,
-                ], // Include user information
+                    'dob' => $blog->user->dob,
+                    'phone' => $blog->user->phone,
+                    'gender' => $blog->user->gender,
+                    'image' => $blog->user->image,
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -178,8 +191,8 @@ class BlogController extends Controller
             $validatedData = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
-                'thumbnail' => 'url',
-                'hashtags' => 'array',
+                'thumbnail' => 'nullable|url',
+                'hashtags' => 'nullable|array',
                 'hashtags.*' => 'string|max:50',
             ])->validate();
 
@@ -257,7 +270,8 @@ class BlogController extends Controller
                 'status' => $validatedData['status'],
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
             ]);
-// Update hashtags
+
+            // Update hashtags
             $blog->hashtags()->detach();
             $hashtags = $validatedData['hashtags'] ?? [];
 
@@ -342,7 +356,7 @@ class BlogController extends Controller
             $blog->increment('like');
 
             return response()->json([
-'message' => 'Blog like updated successfully',
+                'message' => 'Blog like updated successfully',
                 'blog' => $blog,
             ], 200);
         } catch (\Exception $e) {
