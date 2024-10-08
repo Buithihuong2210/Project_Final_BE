@@ -95,6 +95,7 @@ class BlogController extends Controller
             // Attach hashtags to the blog
             $blog->hashtags()->attach($hashtagIds);
 
+            // Return the blog along with only the hashtag names
             // Reload blog with hashtags and user relationship to include in the response
             $blog->load(['hashtags', 'user']);
 
