@@ -67,9 +67,8 @@ Route::prefix('responses')->group(function () {
 
 Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserController::class, 'getUserById']);
-    Route::get('/data', [UserController::class, 'getUserData']);
-
 });
+
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
