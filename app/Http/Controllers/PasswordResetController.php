@@ -15,7 +15,6 @@ class PasswordResetController extends Controller
     // Send reset link to email
     public function sendResetLink(Request $request)
     {
-//        die()
 
         // Validate the email
         $request->validate(['email' => 'required|email']);
@@ -62,7 +61,6 @@ class PasswordResetController extends Controller
                 'password' => 'required|string|confirmed',
             ]);
         }catch (\Throwable $th) {
-            // die('huongxinhdep');
             return response()->json([
                 // 'access_token' => $token,
                 'message' => $th->getMessage(),

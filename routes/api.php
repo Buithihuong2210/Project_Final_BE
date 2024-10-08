@@ -48,7 +48,6 @@ Route::middleware('auth:sanctum')->delete('/user/{id}', [UserController::class, 
 
 Route::post('password/forgot', [PasswordResetController::class, 'sendResetLink']);
 Route::post('password/reset', [PasswordResetController::class, 'reset']);
-
 Route::get('auth/google', [SocialController::class, 'redirectToGoogle']);
 Route::get('auth/google/callback', [SocialController::class, 'handleGoogleCallback']);
 
@@ -75,6 +74,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/change-password', [UserController::class, 'changePassword']);
 
     // Survey routes for users
 Route::prefix('surveys')->group(function () {
