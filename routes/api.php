@@ -22,6 +22,8 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PayOSController;
+use App\Http\Controllers\VNPayController;
 
 
 
@@ -59,7 +61,26 @@ Route::group(['middleware' => 'web'], function () {
 Route::prefix('upload')->group(function () {
     Route::post('/', [ImageController::class, 'uploadImage']);
     Route::delete('/{id}', [ImageController::class, 'destroy']); // Delete a specific image
+    Route::get('/test', [ImageController::class, 'getImage']);
 });
+
+Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
+Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
+
+
+Route::post('/payos/payment/create', [PayOSController::class, 'createPayment']);
+Route::post('/payos/payment/response', [PayOSController::class, 'handlePaymentResponse']);
+
+Route::post('/create-payment-link', [PayOSController::class, 'createPaymentLink']);
+
+Route::post('/payment/vnpay/return', [VNPayController::class, 'handleReturn']);
+Route::post('/payment/vnpay/create', [VNPayController::class, 'createPayment']);
+Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
+Route::get('/payment/transaction-info', [VNPayController::class, 'getTransactionInfo']);
+
+Route::get('blogs/users/{userId}', [BlogController::class, 'showUserBlogs']);
+
+
 
 Route::prefix('responses')->group(function () {
     Route::get('/', [ResponseController::class, 'index']); // List all responses
@@ -69,6 +90,9 @@ Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserController::class, 'getUserById']);
 });
 
+    Route::prefix('transactions')->group(function () {
+
+    });
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -179,8 +203,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
         Route::get('/{blog}', [BlogController::class, 'show']);
         Route::delete('/{blog}', [BlogController::class, 'destroy']);
-        Route::post('/{blog_id}/likes', [BlogController::class, 'updateLike']);
+        Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
+        Route::put('/{blog_id}/likes', [BlogController::class, 'setLikes']); // Đường dẫn để cập nhật số lượt like
+//        Route::get('users/{userId}', [BlogController::class, 'showUserBlogs']);
     });
+
     Route::prefix('shippings')->group(function () {
 Route::get('/', [ShippingController::class, 'index']); // List all shipping records
         Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
@@ -222,12 +249,6 @@ Route::get('/', [ShippingController::class, 'index']); // List all shipping reco
         Route::get('/', [ResponseController::class, 'index']); // List all responses
         Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
         Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
-    });
-
-    Route::prefix('payments')->group(function () {
-Route::post('/', [PaymentController::class, 'createPayment']); // Create a payment
-        Route::get('/success', [PaymentController::class, 'success'])->name('payment.success'); // Handle payment success
-        Route::post('/notify', [PaymentController::class, 'notify'])->name('payment.notify'); // Handle payment notifications
     });
 
 });

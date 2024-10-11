@@ -15,21 +15,17 @@ class Payment extends Model
 
     protected $fillable = [
         'order_id',
-        'user_id',
-        'payment_method',
         'amount',
+        'transaction_no',
+        'bank_code',
+        'card_type',
+        'pay_date',
         'status',
-        'transaction_id',
     ];
 
     // Define relationships
     public function order()
     {
         return $this->belongsTo(Order::class, 'order_id', 'order_id');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

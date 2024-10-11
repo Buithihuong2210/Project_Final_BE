@@ -22,7 +22,7 @@ class OrderController extends Controller
                 'shipping_id' => 'required|exists:shippings,id',
                 'shipping_address' => 'required|string',
                 'voucher_id' => 'nullable|exists:vouchers,voucher_id',
-                'payment_method' => 'required|in:Cash on Delivery,VNpay Payment', // Ensure valid payment method
+                'payment_method' => 'required|in:Cash on Delivery,VNpay Payment',
             ]);
 
             $userId = auth()->id();
@@ -52,7 +52,7 @@ class OrderController extends Controller
             // Calculate total amount
             $totalAmount = $subtotalOfCart + $shippingCost - $discountAmount;
 
-            // Create the order and set the initial status
+            // Create the order and set the initial status and payment status
             $order = Order::create([
                 'user_id' => $userId,
                 'subtotal_of_cart' => $subtotalOfCart,
@@ -62,10 +62,22 @@ class OrderController extends Controller
                 'shipping_name' => $shipping->name,
                 'shipping_cost' => $shippingCost,
                 'shipping_address' => $request->shipping_address,
-                'status' => 'Processing', // Set initial status
+                'status' => 'Processing',
                 'payment_method' => $request->payment_method,
-
+                'payment_status' => ($request->payment_method == 'Cash on Delivery') ? 'Pending' : 'Pending', // Đặt trạng thái thanh toán ban đầu là Pending
             ]);
+
+            // Xử lý thanh toán dựa trên phương thức thanh toán được chọn
+            if ($request->payment_method === 'VNpay Payment') {
+                // Gọi cổng thanh toán VNpay
+                $paymentResult = $this->processVNPayPayment($order); // Gọi hàm xử lý VNpay
+
+                if ($paymentResult['status'] === 'success') {
+                    $order->update(['payment_status' => 'Paid']); // Cập nhật trạng thái thanh toán thành Paid
+                } else {
+                    $order->update(['payment_status' => 'Failed']); // Cập nhật trạng thái thanh toán nếu thất bại
+                }
+            } // Nếu là Cash on Delivery, không cần thay đổi gì vì payment_status vẫn là Pending
 
             return response()->json([
                 'user_id' => $order->user_id,
@@ -78,7 +90,8 @@ class OrderController extends Controller
                 'discount_amount' => number_format($discountAmount, 2),
                 'total_amount' => number_format($order->total_amount, 2),
                 'payment_method' => $order->payment_method,
-                'status' => 'Processing', // Set initial status
+                'payment_status' => $order->payment_status, // Thêm payment_status vào response
+                'status' => 'Processing',
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at,
                 'id' => $order->order_id,
@@ -110,7 +123,8 @@ class OrderController extends Controller
                     'shipping_cost' => number_format($order->shipping_cost, 2),
                     'total_amount' => number_format($order->total_amount, 2),
                     'payment_method' => $order->payment_method,
-                    'status' => $order->status, // Include the status in the response
+                    'payment_status' => $order->payment_status,
+                    'status' => $order->status,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
                 ];
@@ -142,5 +156,20 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => 'An error occurred while updating the order status.', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    protected function processVNPayPayment(Order $order)
+    {
+        // Thực hiện thanh toán qua VNpay
+        // Thực hiện logic gọi VNpay API và nhận kết quả thanh toán
+        // Đây là một ví dụ giả định, bạn cần thay đổi theo cách bạn thực hiện thanh toán
+
+        // Giả lập xử lý thanh toán thành công
+        return [
+            'status' => 'success', // Hoặc 'failed' tùy thuộc vào kết quả
+        ];
+
+        // Nếu thất bại, có thể trả về
+        // return ['status' => 'failed'];
     }
 }

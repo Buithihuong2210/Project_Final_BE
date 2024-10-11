@@ -105,7 +105,7 @@ class BlogController extends Controller
                 'title' => $blog->title,
                 'content' => $blog->content,
                 'thumbnail' => $blog->thumbnail,
-                'like' => $blog->like,
+                'like' => $blog->like, // This will return 0 if there are no likes
                 'status' => $blog->status,
                 'created_at' => $blog->created_at,
                 'updated_at' => $blog->updated_at,
@@ -171,6 +171,17 @@ class BlogController extends Controller
                 'error' => $e->getMessage(),
             ], 404);
         }
+    }
+
+    public function showUserBlogs($userId)
+    {
+        $blogs = Blog::where('user_id', $userId)->get();
+
+        if ($blogs->isEmpty()) {
+            return response()->json(['message' => 'No blogs found for this user.'], 404);
+        }
+
+        return response()->json($blogs, 200);
     }
 
     // Update a blog as a regular user (only if the blog is in draft status)
@@ -287,7 +298,7 @@ class BlogController extends Controller
             // Return the blog with the hashtags included in the blog object
             return response()->json([
                 'blog' => [
-                    'blog_id' => $blog->id,
+                    'blog_id' => $blog->blog_id,
                     'title' => $blog->title,
                     'content' => $blog->content,
                     'status' => $blog->status,
@@ -339,30 +350,55 @@ class BlogController extends Controller
         }
     }
 
+    public function setLikes(Request $request, $blog_id)
+    {
+        // Xác thực và xử lý số lượng likes
+        $validatedData = $request->validate([
+            'like' => 'required|integer|min:0', // Ví dụ, yêu cầu số lượng likes phải là số nguyên không âm
+        ]);
+
+        // Tìm blog theo ID
+        $blog = Blog::findOrFail($blog_id);
+
+        // Cập nhật số lượt like
+        $blog->like = $validatedData['like'];
+        $blog->save();
+
+        return response()->json([
+            'message' => 'Likes updated successfully!',
+            'blog_id' => $blog->blog_id,
+            'likes' => $blog->like,
+        ], 200);
+    }
+
     // Increment the like count for a blog
-    public function updateLike($blog_id)
+
+    public function likeBlog($blog_id)
     {
         try {
+            // Tìm blog theo ID
             $blog = Blog::findOrFail($blog_id);
 
-            // Check if the blog status is 'published'
-            if ($blog->status !== 'published') {
-                return response()->json([
-                    'message' => 'Likes can only be updated for published blogs',
-                ], 403);
-            }
-
-            // Increment the like count
+            // Tăng số lượt like lên 1
             $blog->increment('like');
 
+            // Trả về thông tin blog sau khi update lượt like
             return response()->json([
-                'message' => 'Blog like updated successfully',
-                'blog' => $blog,
+                'message' => 'Blog liked successfully!',
+                'blog_id' => $blog->blog_id,
+                'title' => $blog->title,
+                'like' => $blog->like,
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while updating the like count',
+            // Log lỗi
+            Log::error('Error liking blog', [
+                'blog_id' => $blog_id,
                 'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while liking the blog',
+                'error' => 'Internal Server Error',
             ], 500);
         }
     }

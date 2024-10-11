@@ -32,4 +32,6 @@ class Blog extends Model
     {
         return $this->belongsToMany(Hashtag::class, 'hashtag_blog','blog_id','hashtag_id');
     }
+
+
 }

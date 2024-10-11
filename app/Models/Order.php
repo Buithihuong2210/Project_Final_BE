@@ -24,6 +24,7 @@ class Order extends Model
         'subtotal_of_cart',
         'total_amount',
         'payment_method',
+        'payment_status',
         'order_date',
         'status'
     ];
@@ -43,4 +44,10 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'order_id', 'order_id');
+    }
+
 }
