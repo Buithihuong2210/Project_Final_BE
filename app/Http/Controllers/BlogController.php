@@ -444,6 +444,15 @@ class BlogController extends Controller
                     'like' => $blog->like,
                     'created_at' => $blog->created_at,
                     'updated_at' => $blog->updated_at,
+                    'user' => [
+                        'user_id' => $blog->user->id, // Thông tin người dùng
+                        'name' => $blog->user->name,
+                        'email' => $blog->user->email,
+                        'dob' => $blog->user->dob,
+                        'phone' => $blog->user->phone,
+                        'gender' => $blog->user->gender,
+                        'image' => $blog->user->image,
+                        ],
                     'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
                 ];
             }), 200);
@@ -455,13 +464,14 @@ class BlogController extends Controller
         }
     }
 
-    // Show a published blog by its ID
-// Show all published blogs
+// Show all published blogs with user information
     public function showAllPublishedBlogs()
     {
         try {
-            // Lấy tất cả các blog có trạng thái là 'published'
-            $blogs = Blog::where('status', 'published')->get();
+            // Lấy tất cả các blog có trạng thái là 'published' kèm theo thông tin người dùng
+            $blogs = Blog::with('user', 'hashtags') // 'user' là mối quan hệ giữa Blog và User
+            ->where('status', 'published')
+                ->get();
 
             // Kiểm tra nếu không tìm thấy blog nào
             if ($blogs->isEmpty()) {
@@ -470,7 +480,7 @@ class BlogController extends Controller
                 ], 404);
             }
 
-            // Trả về danh sách các bài blog đã xuất bản
+            // Trả về danh sách các bài blog đã xuất bản kèm thông tin người dùng
             return response()->json($blogs->map(function ($blog) {
                 return [
                     'blog_id' => $blog->blog_id,
@@ -480,6 +490,15 @@ class BlogController extends Controller
                     'like' => $blog->like,
                     'created_at' => $blog->created_at,
                     'updated_at' => $blog->updated_at,
+                    'user' => [
+                        'user_id' => $blog->user->id, // Giả sử user có id
+                        'name' => $blog->user->name,
+                        'email' => $blog->user->email,
+                        'dob' => $blog->user->dob,
+                        'phone' => $blog->user->phone,
+                        'gender' => $blog->user->gender,
+                        'image' => $blog->user->image,
+                    ],
                     'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
                 ];
             }), 200);
