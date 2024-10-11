@@ -9,6 +9,7 @@ class Blog extends Model
 {
     use HasFactory;
 
+    protected $table = 'blogs';
     protected $primaryKey = 'blog_id'; // Define primary key
 
     protected $fillable = [
@@ -19,7 +20,6 @@ class Blog extends Model
         'status',
         'like'
     ];
-
 
     // Define the relationship to the User model
     public function user()

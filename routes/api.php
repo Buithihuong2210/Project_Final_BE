@@ -21,7 +21,6 @@ use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayOSController;
 use App\Http\Controllers\VNPayController;
 
@@ -78,7 +77,6 @@ Route::post('/payment/vnpay/create', [VNPayController::class, 'createPayment']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 Route::get('/payment/transaction-info', [VNPayController::class, 'getTransactionInfo']);
 
-Route::get('blogs/users/{userId}', [BlogController::class, 'showUserBlogs']);
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
 
@@ -96,6 +94,10 @@ Route::prefix('users')->group(function () {
     Route::prefix('transactions')->group(function () {
 
     });
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
+});
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -149,6 +151,7 @@ Route::prefix('surveys')->group(function () {
         Route::get('/', [BlogController::class, 'showAll']);
         Route::put('/{blog}', [BlogController::class, 'updateUser']);
         Route::get('/{blog}', [BlogController::class, 'show']);
+//        Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
     });
 
     Route::prefix('comments')->group(function () {

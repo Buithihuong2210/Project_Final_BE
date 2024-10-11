@@ -174,16 +174,52 @@ class BlogController extends Controller
         }
     }
 
-    public function showUserBlogs($userId)
+    public function showUserBlogs(Request $request)
     {
-        $blogs = Blog::where('user_id', $userId)->get();
+        try {
+            // Lấy người dùng hiện tại từ token
+            $user = $request->user();
 
-        if ($blogs->isEmpty()) {
-            return response()->json(['message' => 'No blogs found for this user.'], 404);
+            // Nếu không có người dùng, trả về lỗi
+            if (!$user) {
+                return response()->json(['message' => 'User not authenticated or invalid token.'], 401);
+            }
+
+            // Tìm tất cả blog của người dùng hiện tại
+            $blogs = Blog::where('user_id', $user->id)->with('user')->get();
+
+            // Kiểm tra nếu không có blog nào cho người dùng
+            if ($blogs->isEmpty()) {
+                return response()->json(['message' => 'No blogs found for this user.'], 404);
+            }
+
+            // Trả về danh sách blog của người dùng
+            return response()->json($blogs->map(function ($blog) {
+                return [
+                    'blog_id' => $blog->blog_id,
+                    'title' => $blog->title,
+                    'content' => $blog->content,
+                    'status' => $blog->status,
+                    'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                    'user' => [
+                        'id' => $blog->user->id,
+                        'name' => $blog->user->name,
+                        'email' => $blog->user->email,
+                    ],
+                ];
+            }), 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching user blogs',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json($blogs, 200);
     }
+
 
     // Update a blog as a regular user (only if the blog is in draft status)
     public function updateUser(Request $request, $blog_id)
