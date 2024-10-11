@@ -79,6 +79,9 @@ Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentRetur
 Route::get('/payment/transaction-info', [VNPayController::class, 'getTransactionInfo']);
 
 Route::get('blogs/users/{userId}', [BlogController::class, 'showUserBlogs']);
+Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
+Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
+
 
 
 

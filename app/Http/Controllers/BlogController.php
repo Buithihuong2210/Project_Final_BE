@@ -81,6 +81,7 @@ class BlogController extends Controller
                 'content' => $validatedData['content'],
                 'status' => $isAdmin ? $validatedData['status'] : 'draft',
                 'thumbnail' => $validatedData['thumbnail'] ?? '',
+                'like' => 0 // Initialize likes to 0
               
             ]);
 
@@ -418,4 +419,79 @@ class BlogController extends Controller
             ], 404);
         }
     }
+
+    // List all blogs with status 'draft'
+// List all blogs with status 'draft'
+    public function listDraftBlogs()
+    {
+        try {
+            // Lấy tất cả các blog có trạng thái 'draft'
+            $draftBlogs = Blog::where('status', 'draft')->get();
+
+            // Kiểm tra nếu không có bài blog nào
+            if ($draftBlogs->isEmpty()) {
+                return response()->json([], 404); // Trả về mảng rỗng với mã lỗi 404
+            }
+
+            // Trả về danh sách các bài blog dạng draft
+            return response()->json($draftBlogs->map(function ($blog) {
+                return [
+                    'blog_id' => $blog->blog_id,
+                    'title' => $blog->title,
+                    'content' => $blog->content,
+                    'status' => $blog->status,
+                    'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                    'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
+                ];
+            }), 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching draft blogs',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // Show a published blog by its ID
+// Show all published blogs
+    public function showAllPublishedBlogs()
+    {
+        try {
+            // Lấy tất cả các blog có trạng thái là 'published'
+            $blogs = Blog::where('status', 'published')->get();
+
+            // Kiểm tra nếu không tìm thấy blog nào
+            if ($blogs->isEmpty()) {
+                return response()->json([
+                    'message' => 'No published blogs found',
+                ], 404);
+            }
+
+            // Trả về danh sách các bài blog đã xuất bản
+            return response()->json([
+                'published_blogs' => $blogs->map(function ($blog) {
+                    return [
+                        'blog_id' => $blog->blog_id,
+                        'title' => $blog->title,
+                        'content' => $blog->content,
+                        'thumbnail' => $blog->thumbnail,
+                        'like' => $blog->like,
+                        'created_at' => $blog->created_at,
+                        'updated_at' => $blog->updated_at,
+                        'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
+                    ];
+                }),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching published blogs',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }
