@@ -471,20 +471,18 @@ class BlogController extends Controller
             }
 
             // Trả về danh sách các bài blog đã xuất bản
-            return response()->json([
-                'published_blogs' => $blogs->map(function ($blog) {
-                    return [
-                        'blog_id' => $blog->blog_id,
-                        'title' => $blog->title,
-                        'content' => $blog->content,
-                        'thumbnail' => $blog->thumbnail,
-                        'like' => $blog->like,
-                        'created_at' => $blog->created_at,
-                        'updated_at' => $blog->updated_at,
-                        'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
-                    ];
-                }),
-            ], 200);
+            return response()->json($blogs->map(function ($blog) {
+                return [
+                    'blog_id' => $blog->blog_id,
+                    'title' => $blog->title,
+                    'content' => $blog->content,
+                    'thumbnail' => $blog->thumbnail,
+                    'like' => $blog->like,
+                    'created_at' => $blog->created_at,
+                    'updated_at' => $blog->updated_at,
+                    'hashtags' => $blog->hashtags->pluck('name'), // Lấy tên hashtag
+                ];
+            }), 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while fetching published blogs',
