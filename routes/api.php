@@ -105,6 +105,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
+
+
+
     Route::post('/change-password', [UserController::class, 'changePassword']);
 
     // Survey routes for users

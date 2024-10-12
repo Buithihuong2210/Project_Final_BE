@@ -209,6 +209,7 @@ class BlogController extends Controller
                         'name' => $blog->user->name,
                         'email' => $blog->user->email,
                     ],
+                    'hashtags' => $blog->hashtags->pluck('name')
                 ];
             }), 200);
 
