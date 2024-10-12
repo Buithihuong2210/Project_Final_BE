@@ -208,6 +208,10 @@ class BlogController extends Controller
                         'id' => $blog->user->id,
                         'name' => $blog->user->name,
                         'email' => $blog->user->email,
+                        'dob' => $blog->user->dob,
+                        'phone' => $blog->user->phone,
+                        'gender' => $blog->user->gender,
+                        'image' => $blog->user->image,
                     ],
                     'hashtags' => $blog->hashtags->pluck('name')
                 ];

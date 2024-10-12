@@ -92,12 +92,9 @@ Route::prefix('users')->group(function () {
 });
 
     Route::prefix('transactions')->group(function () {
-
     });
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
-});
+
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -106,8 +103,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
-
-
 
     Route::post('/change-password', [UserController::class, 'changePassword']);
 
