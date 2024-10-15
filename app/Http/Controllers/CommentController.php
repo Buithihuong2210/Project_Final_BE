@@ -7,19 +7,19 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    // Create a new comment
-    public function store(Request $request)
+
+    // Create a new comment for a specific blog
+    public function store(Request $request, $blog_id)
     {
         try {
-            // Validate the incoming request to ensure the blog exists and content is provided
+            // Validate the content, blog_id comes from the route
             $validatedData = $request->validate([
-                'blog_id' => 'required|exists:blogs,blog_id', // Adjusted to reference the correct column
                 'content' => 'required|string',
             ]);
 
-            // Create the comment while automatically associating it with the authenticated user
+            // Create the comment, using the blog_id from the route
             $comment = Comment::create([
-                'blog_id' => $validatedData['blog_id'],
+                'blog_id' => $blog_id, // Use the blog_id from the route
                 'user_id' => auth()->id(), // Sets the user ID to the current authenticated user
                 'content' => $validatedData['content'],
             ]);
