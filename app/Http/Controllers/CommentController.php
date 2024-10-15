@@ -24,6 +24,8 @@ class CommentController extends Controller
                 'content' => $validatedData['content'],
             ]);
 
+            $comment->load('user');
+
             // Return the newly created comment with a 201 status code indicating success
             return response()->json($comment, 201);
 
