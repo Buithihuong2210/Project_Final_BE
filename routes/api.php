@@ -92,18 +92,17 @@ Route::prefix('users')->group(function () {
 });
 
     Route::prefix('transactions')->group(function () {
-
     });
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
-});
+
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
 
     Route::post('/change-password', [UserController::class, 'changePassword']);
 
@@ -155,8 +154,8 @@ Route::prefix('surveys')->group(function () {
     });
 
     Route::prefix('comments')->group(function () {
-        Route::post('/', [CommentController::class, 'store']); // Create a new comment
-        Route::get('/blogs/{blog_id}', [CommentController::class, 'index']); // Fetch comments for a blog
+        Route::get('blog/{blog_id}', [CommentController::class, 'index']); // Fetch comments for a blog
+        Route::post('blog/{blog_id}', [CommentController::class, 'store']); // Create a comment for a specific blog
         Route::put('/{comment_id}', [CommentController::class, 'update']); // Update a specific comment
         Route::delete('/{comment_id}', [CommentController::class, 'destroy']); // Delete a specific comment
     });
