@@ -55,8 +55,8 @@ class UserController extends Controller
 
         // Return a response without wrapping in 'user' object
         return response()->json([
-                'message' => "User {$id} updated successfully",
-            ] + $user->toArray(), 200); // Merging user data directly into response
+                'message' => "User updated successfully",
+            ]); // Merging user data directly into response
     }
 
     public function destroy($id)
