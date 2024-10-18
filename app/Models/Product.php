@@ -84,4 +84,8 @@ class Product extends Model
     {
         return $this->reviews()->avg('rate');
     }
+
+    protected $casts = [
+        'images' => 'array',
+    ];
 }

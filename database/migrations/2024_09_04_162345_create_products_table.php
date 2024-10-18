@@ -18,10 +18,8 @@ return new class extends Migration
             $table->decimal('price', 10, 2); // Column to store the product price with 2 decimal places
             $table->unsignedInteger('quantity'); // Column to store the product quantity
             $table->unsignedBigInteger('brand_id'); // Foreign key column for brands
-            $table->string('image')->nullable(); // Column to store the image path, allows null values
             $table->string('status'); // Column to store the product status
             $table->timestamps(); // Creates 'created_at' and 'updated_at' columns
-
             // Define foreign key constraint
 //            $table->foreign('brand_id')->references('id')->on('brands')->onDelete('cascade');
         });

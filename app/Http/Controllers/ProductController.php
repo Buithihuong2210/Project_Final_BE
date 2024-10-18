@@ -65,18 +65,17 @@ class ProductController extends Controller
             ]);
 
             $product_data = $request->all();
-            $product_data['images'] = json_encode($request->input('images'));
             $product_data['status'] = 'available';
+
+            // Chỉ lưu mảng images mà không cần json_encode
+            // Trường images sẽ được tự động xử lý thành JSON nếu bạn đã khai báo trong $casts
 
             $discount = $request->input('discount', 0);
             $product_data['discounted_price'] = $discount > 0 && $discount < 100
                 ? round($product_data['price'] * (1 - $discount / 100), 2)
                 : round($product_data['price'], 2);
 
-            // Initialize rating as null or 0 when creating a product
-//            $product_data['rating'] = null;
             $product_data['rating'] = $request->input('rating', 0);
-
 
             $product = Product::create($product_data);
 
@@ -103,7 +102,7 @@ class ProductController extends Controller
                 'discounted_price' => $product->discounted_price,
                 'quantity' => $product->quantity,
                 'brand_id' => $product->brand_id,
-                'images' => json_decode($product->images),
+                'images' => json_decode($product->images, true),
                 'status' => $product->status,
                 'short_description' => $product->short_description,
                 'volume' => $product->volume,
