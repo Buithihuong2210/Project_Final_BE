@@ -1,36 +1,44 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-
     // Create a new comment for a specific blog
     public function store(Request $request, $blog_id)
     {
         try {
-            // Validate the content, blog_id comes from the route
+            // Validate input data
             $validatedData = $request->validate([
                 'content' => 'required|string',
+                'parent_id' => 'nullable|exists:comments,comment_id', // Check if parent_id exists in the comments table
             ]);
 
-            // Create the comment, using the blog_id from the route
+            // Create a new comment
             $comment = Comment::create([
-                'blog_id' => $blog_id, // Use the blog_id from the route
-                'user_id' => auth()->id(), // Sets the user ID to the current authenticated user
+                'blog_id' => $blog_id,
+                'user_id' => auth()->id(),
                 'content' => $validatedData['content'],
+                'parent_id' => $validatedData['parent_id'] ?? null, // Assign parent_id if provided
             ]);
 
-            $comment->load('user');
+            // Load the associated user
+            $comment->load('user:id,name,image'); // Load only id and name from user for efficiency
 
-            // Return the newly created comment with a 201 status code indicating success
+            // Return the newly created comment with a 201 status code
             return response()->json($comment, 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            // Handle any errors gracefully and return a meaningful message
+            // Handle other exceptions
             return response()->json([
                 'message' => 'An error occurred while creating the comment',
                 'error' => $e->getMessage(),
@@ -38,79 +46,108 @@ class CommentController extends Controller
         }
     }
 
-    // Fetch all comments for a specific blog
+    // Get all comments for a specific blog
     public function index($blog_id)
     {
         try {
-            // Fetch comments related to the given blog and eager load the user relationship
-            $comments = Comment::where('blog_id', $blog_id)->with('user')->get();
-            return response()->json($comments);
+            // Get comments related to the blog and eager load relationships with user and replies
+            $comments = Comment::where('blog_id', $blog_id)
+                ->with(['user:id,name,image', 'replies.user:id,name,image']) // Eager load user and replies with specified fields
+                ->get();
+
+            // Check if comments are empty
+            if ($comments->isEmpty()) {
+                return response()->json([], 200); // Return an empty array
+            }
+
+            return response()->json($comments, 200);
 
         } catch (\Exception $e) {
-            // Return an error message in case the fetching process fails
+            // Handle errors
             return response()->json([
-                'message' => 'An error occurred while fetching comments',
+                'message' => 'An error occurred while retrieving comments',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
 
-    // Update a specific comment by the comment ID
-    public function update(Request $request, $comment_id)
+    // Update a specific comment
+    public function update(Request $request, $blog_id, $comment_id)
     {
         try {
-            // Find the comment by its ID or fail if it does not exist
+            // Validate input data
+            $validatedData = $request->validate([
+                'content' => 'required|string', // Ensure content is required and is a string
+            ]);
+
+            // Find the comment by ID
             $comment = Comment::findOrFail($comment_id);
 
-            // Ensure the authenticated user is the owner of the comment
+            // Optional: Check if the authenticated user is the owner of the comment
             if ($comment->user_id !== auth()->id()) {
-                return response()->json(['message' => 'Unauthorized'], 403);
+                return response()->json([
+                    'message' => 'You are not authorized to update this comment.',
+                ], 403);
             }
-
-            // Validate the new content to be updated
-            $validatedData = $request->validate([
-                'content' => 'required|string',
-            ]);
 
             // Update the comment content
             $comment->update([
                 'content' => $validatedData['content'],
             ]);
 
-            // Return the updated comment
-            return response()->json($comment);
+            // Load user data after update
+            $comment->load('user');
 
-        } catch (\Exception $e) {
-            // In case of failure, return an error message
+            // Return the updated comment with a 200 status code
+            return response()->json($comment, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle the case where the comment is not found
             return response()->json([
-                'message' => 'An error occurred while updating the comment',
+                'message' => 'Comment not found.',
+                'error' => $e->getMessage(),
+            ], 404);
+        } catch (\Exception $e) {
+            // Handle any other exceptions
+            return response()->json([
+                'message' => 'An error occurred while updating the comment.',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
 
-    // Delete a specific comment by its ID
-    public function destroy($comment_id)
+    // Delete a specific comment
+    public function destroy($blog_id, $comment_id)
     {
         try {
-            // Find the comment by its ID
+            // Find the comment by ID
             $comment = Comment::findOrFail($comment_id);
 
-            // Ensure that the user attempting to delete the comment is the owner
+            // Optional: Check if the authenticated user is the owner of the comment
             if ($comment->user_id !== auth()->id()) {
-                return response()->json(['message' => 'Unauthorized'], 403);
+                return response()->json([
+                    'message' => 'You are not authorized to delete this comment.',
+                ], 403);
             }
 
             // Delete the comment
             $comment->delete();
 
-            // Return a successful response with no content
-            return response()->json(null, 204);
-
-        } catch (\Exception $e) {
-            // Handle any exceptions and return an appropriate error response
+            // Return a success response
             return response()->json([
-                'message' => 'An error occurred while deleting the comment',
+                'message' => "Comment {$comment_id} deleted successfully."
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle the case where the comment is not found
+            return response()->json([
+                'message' => 'Comment not found.',
+                'error' => $e->getMessage(),
+            ], 404);
+        } catch (\Exception $e) {
+            // Handle any other exceptions
+            return response()->json([
+                'message' => 'An error occurred while deleting the comment.',
                 'error' => $e->getMessage(),
             ], 500);
         }

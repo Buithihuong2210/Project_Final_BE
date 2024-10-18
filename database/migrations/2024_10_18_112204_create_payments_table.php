@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id('payment_id'); // Khóa chính
-            $table->unsignedInteger('order_id'); // Khóa ngoại trỏ tới bảng orders
+            $table->unsignedBigInteger('order_id'); // Khóa ngoại trỏ tới bảng orders
             $table->string('transaction_no'); // Số giao dịch
             $table->string('bank_code')->nullable(); // Mã ngân hàng
             $table->string('card_type')->nullable(); // Loại thẻ
@@ -24,7 +24,6 @@ return new class extends Migration
             // Khóa ngoại với ON DELETE CASCADE
             $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
         });
-
     }
 
     /**
