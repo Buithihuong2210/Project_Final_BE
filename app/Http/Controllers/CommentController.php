@@ -52,7 +52,7 @@ class CommentController extends Controller
         try {
             // Get comments related to the blog and eager load relationships with user and replies
             $comments = Comment::where('blog_id', $blog_id)
-                ->with(['user:user:id,name,image,dob,role,phone,gender,email', 'replies.user:user:id,name,image,dob,role,phone,gender,email'])
+                ->with(['user:id,name,image,dob,role,phone,gender,email', 'replies.user:id,name,image,dob,role,phone,gender,email']) // Removed 'user:' prefix here
                 ->get();
 
             // Check if comments are empty

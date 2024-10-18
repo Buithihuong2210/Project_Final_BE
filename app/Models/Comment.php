@@ -19,7 +19,7 @@ class Comment extends Model
     // Comment belongs to a user
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
     // Quan hệ comment con (trả lời một comment khác)
     public function replies()
