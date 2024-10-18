@@ -21,7 +21,6 @@ use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\PayOSController;
 use App\Http\Controllers\VNPayController;
 
 
@@ -67,13 +66,11 @@ Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
 Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
 
 
-Route::post('/payos/payment/create', [PayOSController::class, 'createPayment']);
-Route::post('/payos/payment/response', [PayOSController::class, 'handlePaymentResponse']);
 
-Route::post('/create-payment-link', [PayOSController::class, 'createPaymentLink']);
 
-Route::post('/payment/vnpay/return', [VNPayController::class, 'handleReturn']);
-Route::post('/payment/vnpay/create', [VNPayController::class, 'createPayment']);
+//Route::post('/payment/vnpay/return', [VNPayController::class, 'handleReturn']);
+Route::get('/payments', [VNPayController::class, 'getAllPayments']);
+//Route::post('/payment/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 Route::get('/payment/transaction-info', [VNPayController::class, 'getTransactionInfo']);
 
@@ -91,8 +88,6 @@ Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserController::class, 'getUserById']);
 });
 
-    Route::prefix('transactions')->group(function () {
-    });
 
 
 
@@ -110,6 +105,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::prefix('surveys')->group(function () {
         Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
     });
+
+
+    Route::prefix('payment')->group(function () {
+        Route::post('/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
+    });
+
+
 
 
     // User routes for Cart, Products, Blogs, etc.
@@ -153,11 +155,15 @@ Route::prefix('surveys')->group(function () {
 //        Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
     });
 
-    Route::prefix('comments')->group(function () {
-        Route::get('blog/{blog_id}', [CommentController::class, 'index']); // Fetch comments for a blog
-        Route::post('blog/{blog_id}', [CommentController::class, 'store']); // Create a comment for a specific blog
-        Route::put('/{comment_id}', [CommentController::class, 'update']); // Update a specific comment
-        Route::delete('/{comment_id}', [CommentController::class, 'destroy']); // Delete a specific comment
+    Route::prefix('blogs/{blog_id}')->group(function () {
+        // Get all comments for a specific blog
+        Route::get('/comments', [CommentController::class, 'index']);
+        // Store a new comment or reply to a comment
+        Route::post('/comments', [CommentController::class, 'store']);
+        // Update a specific comment
+        Route::put('/comments/{comment_id}', [CommentController::class, 'update']);
+        // Delete a specific comment
+        Route::delete('/comments/{comment_id}', [CommentController::class, 'destroy']);
     });
 
     Route::prefix('hashtags')->group(function () {
