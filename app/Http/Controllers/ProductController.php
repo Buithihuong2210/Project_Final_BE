@@ -28,7 +28,7 @@ class ProductController extends Controller
                     'discounted_price' => $product->discounted_price,
                     'quantity' => $product->quantity,
                     'brand_id' => $product->brand_id,
-                    'images' => json_decode($product->images),
+                    'images' => $product->images,
                     'status' => $product->status,
                     'short_description' => $product->short_description,
                     'volume' => $product->volume,
@@ -45,6 +45,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'An error occurred while fetching products.', 'error' => $e->getMessage()], 500);
         }
     }
+
 
     // Store a new product
     public function store(Request $request)
