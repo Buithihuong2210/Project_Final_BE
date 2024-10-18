@@ -140,6 +140,8 @@ Route::prefix('surveys')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);  // Create a new order
         Route::get('/' ,[OrderController::class, 'showAll']);
+        Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
+
     });
 
     Route::prefix('products')->group(function () {

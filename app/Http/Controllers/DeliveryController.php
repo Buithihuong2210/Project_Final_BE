@@ -13,7 +13,7 @@ class DeliveryController extends Controller
         try {
             // Validate the incoming request data
             $request->validate([
-                'order_id' => 'required|exists:orders,id', // Ensure 'order_id' exists in 'orders' table
+                'order_id' => 'required|exists:orders,order_id', // Ensure 'order_id' exists in 'orders' table
                 'delivery_address' => 'required|string|max:255', // Validate delivery address
                 'delivery_date' => 'required|date', // Validate delivery date
             ]);

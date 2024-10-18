@@ -26,7 +26,7 @@ class CommentController extends Controller
             ]);
 
             // Load the associated user
-            $comment->load('user:id,name,image'); // Load only id and name from user for efficiency
+            $comment->load('user:id,name,image,dob,role,phone,gender,email'); // Load only id and name from user for efficiency
 
             // Return the newly created comment with a 201 status code
             return response()->json($comment, 201);
@@ -52,7 +52,7 @@ class CommentController extends Controller
         try {
             // Get comments related to the blog and eager load relationships with user and replies
             $comments = Comment::where('blog_id', $blog_id)
-                ->with(['user:id,name,image', 'replies.user:id,name,image']) // Eager load user and replies with specified fields
+                ->with(['user:user:id,name,image,dob,role,phone,gender,email', 'replies.user:user:id,name,image,dob,role,phone,gender,email'])
                 ->get();
 
             // Check if comments are empty

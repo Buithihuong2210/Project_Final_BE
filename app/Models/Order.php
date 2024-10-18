@@ -26,7 +26,9 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'order_date',
-        'status'
+        'status',
+        'expected_delivery_date',
+        'order_date'
     ];
 
     // Optionally, define relationships if needed
