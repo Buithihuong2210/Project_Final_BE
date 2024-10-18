@@ -68,6 +68,12 @@ Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
 Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
 
 
+Route::prefix('deliveries')->group(function () {
+    // Route to create a new delivery
+    Route::post('/', [DeliveryController::class, 'create']);
+    // Route to update the status of a delivery
+    Route::put('/{id}', [DeliveryController::class, 'updateStatus']);
+});
 
 
 //Route::post('/payment/vnpay/return', [VNPayController::class, 'handleReturn']);

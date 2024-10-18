@@ -132,7 +132,7 @@ class ProductController extends Controller
                 'price' => 'sometimes|required|numeric',
                 'discount' => 'nullable|numeric|min:0|max:100',
                 'brand_id' => 'sometimes|required|exists:brands,brand_id',
-                'images' => 'sometimes|required|array',
+                'images' => 'sometimes|nullable|array',
                 'images.*' => 'nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
                 'short_description' => 'nullable|string',
                 'volume' => 'nullable|numeric',
@@ -141,22 +141,48 @@ class ProductController extends Controller
 
             $product_data = $request->all();
 
+            // Check if 'images' is present in the request and is an array
             if ($request->has('images')) {
-                $product_data['images'] = json_encode($request->input('images'));
+                if (is_array($request->input('images'))) {
+                    // Convert images to JSON format without escape characters
+                    $product_data['images'] = json_encode($request->input('images'));
+                }
             }
 
+            // Calculate discounted price
             $discount = $request->input('discount', 0);
             $product_data['discounted_price'] = $discount > 0 && $discount < 100
                 ? round($product_data['price'] * (1 - $discount / 100), 2)
                 : round($product_data['price'], 2);
 
+            // Set status to 'available' if not specified
             if (!$request->has('status')) {
                 $product_data['status'] = 'available';
             }
 
+            // Update the product
             $product->update($product_data);
 
-            return response()->json($product, 200);
+            // Prepare the response
+            return response()->json([
+                'product_id' => $product->product_id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'discount' => $product->discount,
+                'discounted_price' => $product->discounted_price,
+                'quantity' => $product->quantity,
+                'brand_id' => $product->brand_id,
+                'images' => json_decode($product->images), // Decode for response
+                'status' => $product->status,
+                'short_description' => $product->short_description,
+                'volume' => $product->volume,
+                'nature' => $product->nature,
+                'rating' => $product->rating,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+                'brand' => $product->brand
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Product not found'], 404);
         } catch (ValidationException $e) {
