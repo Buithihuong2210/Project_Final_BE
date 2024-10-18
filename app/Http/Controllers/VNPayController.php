@@ -33,7 +33,7 @@ class VNPayController extends Controller
             if ($paymentMethod === 'Cash on Delivery') {
                 $order->status = 'Pending';
                 $order->save();
-                return response()->json(['message' => 'Đơn hàng đã được đặt thành công.'], 200);
+                return response()->json(['message' => 'Đơn hàng đã được đặt thành công. Bạn hãy chờ giao hàng'], 200);
             }
 
             // Nếu là VNpay Payment, tiếp tục với quy trình thanh toán

@@ -6,11 +6,12 @@ use App\Models\Order;
 use App\Models\Shipping;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\ShoppingCart;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\CartController;
 use Illuminate\Database\QueryException;
 use Exception;
+use Carbon\Carbon;
+use App\Models\ShoppingCart;
 
 class OrderController extends Controller
 {
@@ -64,20 +65,29 @@ class OrderController extends Controller
                 'shipping_address' => $request->shipping_address,
                 'status' => 'Processing',
                 'payment_method' => $request->payment_method,
-                'payment_status' => ($request->payment_method == 'Cash on Delivery') ? 'Pending' : 'Pending', // Đặt trạng thái thanh toán ban đầu là Pending
+                'payment_status' => ($request->payment_method == 'Cash on Delivery') ? 'Pending' : 'Pending',
+                'order_date' => now(),
             ]);
+
+            // Tính toán ngày giao hàng dự kiến
+            $processingDays = 2; // Số ngày xử lý (ví dụ)
+            $shippingDays = 3; // Số ngày giao hàng (ví dụ)
+            $expectedDeliveryDate = $this->calculateExpectedDeliveryDate($order->order_date, $processingDays, $shippingDays);
+
+            // Cập nhật ngày giao hàng dự kiến vào đơn hàng
+            $order->update(['expected_delivery_date' => $expectedDeliveryDate]);
 
             // Xử lý thanh toán dựa trên phương thức thanh toán được chọn
             if ($request->payment_method === 'VNpay Payment') {
                 // Gọi cổng thanh toán VNpay
-                $paymentResult = $this->processVNPayPayment($order); // Gọi hàm xử lý VNpay
+                $paymentResult = $this->processVNPayPayment($order);
 
                 if ($paymentResult['status'] === 'success') {
-                    $order->update(['payment_status' => 'Paid']); // Cập nhật trạng thái thanh toán thành Paid
+                    $order->update(['payment_status' => 'Paid']);
                 } else {
-                    $order->update(['payment_status' => 'Failed']); // Cập nhật trạng thái thanh toán nếu thất bại
+                    $order->update(['payment_status' => 'Failed']);
                 }
-            } // Nếu là Cash on Delivery, không cần thay đổi gì vì payment_status vẫn là Pending
+            }
 
             return response()->json([
                 'user_id' => $order->user_id,
@@ -90,11 +100,13 @@ class OrderController extends Controller
                 'discount_amount' => number_format($discountAmount, 2),
                 'total_amount' => number_format($order->total_amount, 2),
                 'payment_method' => $order->payment_method,
-                'payment_status' => $order->payment_status, // Thêm payment_status vào response
+                'payment_status' => $order->payment_status,
                 'status' => 'Processing',
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at,
                 'id' => $order->order_id,
+                'order_date' => $order->order_date,
+                'expected_delivery_date' => $expectedDeliveryDate, // Thêm expected_delivery_date vào phản hồi
             ], 201);
 
         } catch (QueryException $e) {
@@ -102,6 +114,19 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
         }
+    }
+
+    protected function calculateExpectedDeliveryDate($orderDate, $processingDays, $shippingDays)
+    {
+        // Chuyển đổi orderDate sang đối tượng Carbon
+        $expectedDate = Carbon::parse($orderDate)->addDays($processingDays + $shippingDays);
+
+        // Kiểm tra nếu ngày dự kiến rơi vào cuối tuần
+        while ($expectedDate->isWeekend()) {
+            $expectedDate->addDay(); // Nếu rơi vào cuối tuần, cộng thêm 1 ngày
+        }
+
+        return $expectedDate->format('Y-m-d'); // Trả về ngày theo định dạng 'YYYY-MM-DD'
     }
 
     public function showAll()
@@ -137,25 +162,41 @@ class OrderController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateOrderStatus(Request $request, $order_id)
     {
-        try {
-            // Validate the incoming request
-            $request->validate([
-                'status' => 'required|in:Processing,Shipping,Delivered,Completed', // Ensure valid status
-            ]);
-
-            // Find the order by ID
-            $order = Order::findOrFail($id);
-            $order->status = $request->status; // Update the status
-            $order->save(); // Save the changes
-
-            return response()->json(['message' => 'Order status updated successfully.', 'order' => $order], 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Order not found'], 404);
-        } catch (Exception $e) {
-            return response()->json(['message' => 'An error occurred while updating the order status.', 'error' => $e->getMessage()], 500);
+        // Tìm đơn hàng theo ID
+        $order = Order::find($order_id);
+        if (!$order) {
+            return response()->json(['error' => 'Đơn hàng không tồn tại.'], 404);
         }
+
+        // Kiểm tra nếu đơn hàng đã hoàn thành, không được cập nhật nữa
+        if ($order->status === 'Completed') {
+            return response()->json(['error' => 'Đơn hàng đã hoàn thành, không thể cập nhật trạng thái.'], 400);
+        }
+
+        // Kiểm tra phương thức thanh toán
+        if ($order->payment_method === 'Cash on Delivery') {
+            if ($order->status === 'Processing') {
+                // Khi shipper chuẩn bị giao hàng
+                $order->status = 'Shipping';
+            } elseif ($order->status === 'Shipping') {
+                // Khi shipper giao hàng và nhận thanh toán
+                $order->status = 'Completed';
+            }
+        } elseif ($order->payment_method === 'VNpay Payment') {
+            if ($order->status === 'Processing') {
+                // Khi thanh toán VNPay thành công
+                $order->status = 'Shipping';
+            } elseif ($order->status === 'Shipping') {
+                // Khi đơn hàng đã được giao thành công
+                $order->status = 'Completed';
+            }
+        }
+
+        $order->save();
+
+        return response()->json(['message' => 'Trạng thái đơn hàng đã được cập nhật thành công.', 'order' => $order], 200);
     }
 
     protected function processVNPayPayment(Order $order)

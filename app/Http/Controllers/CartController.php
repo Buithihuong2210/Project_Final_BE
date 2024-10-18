@@ -66,10 +66,10 @@ class CartController extends Controller
                     ], 400);
                 }
 
-                // Update the cart item with the new quantity and price
+                // Update the cart item with the new quantity and price based on discounted price
                 $cartItem->update([
                     'quantity' => $newQuantity,
-                    'price' => $product->price * $newQuantity // Update the price based on the new quantity
+                    'price' => $product->discounted_price * $newQuantity // Update the price based on the new quantity
                 ]);
             } else {
                 // If the item doesn't exist in the cart, add it
@@ -84,7 +84,7 @@ class CartController extends Controller
                 $cart->items()->create([
                     'product_id' => $request->product_id,
                     'quantity' => $request->quantity,
-                    'price' => $product->price * $request->quantity, // Set price based on product price and quantity
+                    'price' => $product->discounted_price * $request->quantity, // Set price based on discounted price and quantity
                 ]);
             }
 
@@ -142,16 +142,16 @@ class CartController extends Controller
                 'quantity' => 'required|integer|min:1',
             ]);
 
-            // Fetch the related product to get its price
+            // Fetch the related product to get its discounted price
             $product = Product::findOrFail($item->product_id);
 
-            // Calculate the new total price based on the updated quantity
-            $totalPrice = $product->price * $request->quantity;
+            // Calculate the new total price based on the updated quantity and discounted price
+            $totalPrice = $product->discounted_price * $request->quantity;
 
             // Update the cart item with the new quantity and price
             $item->update([
                 'quantity' => $request->quantity,
-                'price' => $totalPrice, // Update total price
+                'price' => $totalPrice, // Update total price based on discounted price
             ]);
 
             // Fetch the updated cart item with the related product
@@ -196,7 +196,7 @@ class CartController extends Controller
         // Load cart items with associated product information
         $cart->load('items.product');
 
-        // Calculate subtotal from cart items
+        // Calculate subtotal from cart items using discounted price
         $subtotal = $cart->items->sum('price');
 
         // Format the subtotal with two decimal places
@@ -208,5 +208,4 @@ class CartController extends Controller
             'subtotal' => $cart->subtotal,
         ];
     }
-
 }
