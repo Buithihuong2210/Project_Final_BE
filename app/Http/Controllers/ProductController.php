@@ -33,7 +33,10 @@ class ProductController extends Controller
                     'short_description' => $product->short_description,
                     'volume' => $product->volume,
                     'nature' => $product->nature,
-                    'rating' => $product->rating, // Add the rating
+                    'product_type' => $product->product_type, // New field
+                    'main_ingredient' => $product->main_ingredient, // New field
+                    'target_skin_type' => $product->target_skin_type, // New field
+                    'rating' => $product->rating,
                     'created_at' => $product->created_at,
                     'updated_at' => $product->updated_at,
                     'brand' => $product->brand
@@ -63,6 +66,10 @@ class ProductController extends Controller
                 'short_description' => 'nullable|string',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
+                'product_type' => 'nullable|string', // New field validation
+                'main_ingredient' => 'nullable|string', // New field validation
+                'target_skin_type' => 'nullable|string', // New field validation
+
             ]);
 
             $product_data = $request->all();
@@ -109,6 +116,9 @@ class ProductController extends Controller
                 'volume' => $product->volume,
                 'nature' => $product->nature,
                 'rating' => $product->rating, // Add the rating
+                'product_type' => $product->product_type, // New field
+                'main_ingredient' => $product->main_ingredient, // New field
+                'target_skin_type' => $product->target_skin_type, // New field
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
                 'brand' => $product->brand
@@ -137,6 +147,9 @@ class ProductController extends Controller
                 'short_description' => 'nullable|string',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
+                'product_type' => 'sometimes|nullable|string', // New field validation
+                'main_ingredient' => 'sometimes|nullable|string', // New field validation
+                'target_skin_type' => 'sometimes|nullable|string', // New field validation
             ]);
 
             $product_data = $request->all();
@@ -179,6 +192,9 @@ class ProductController extends Controller
                 'volume' => $product->volume,
                 'nature' => $product->nature,
                 'rating' => $product->rating,
+                'product_type' => $product->product_type, // New field
+                'main_ingredient' => $product->main_ingredient, // New field
+                'target_skin_type' => $product->target_skin_type, // New field
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
                 'brand' => $product->brand
