@@ -245,30 +245,30 @@ class ProductController extends Controller
             return response()->json(['message' => 'An error occurred while updating the product status.', 'error' => $e->getMessage()], 500);
         }
     }
-
-    // Calculate and update the product rating based on user reviews
-    public function updateRating($product_id)
+    public function getReviewsByProduct($product_id)
     {
         try {
-            // Attempt to find the product
-            $product = Product::findOrFail($product_id);
+            // Check if the product exists
+            $product = Product::find($product_id);
+            if (!$product) {
+                return response()->json(['message' => 'Product not found'], 404);
+            }
 
-            // Calculate the average rating from the reviews
-            $averageRating = Review::where('product_id', $product_id)->avg('rate');
+            // Get all reviews for the specified product
+            $reviews = Review::with(['user'])->where('product_id', $product_id)->get();
 
-            // If there are no reviews yet, set the rating to null or 0
-            $product->rating = $averageRating ? round($averageRating, 2) : null;
+            // Calculate the average rating
+            $averageRating = $reviews->avg('rate');
 
-            // Save the updated rating in the product
-            $product->save();
-
-            return response()->json(['message' => 'Product rating updated successfully.', 'product' => $product], 200);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // If product is not found, return a 404 error
-            return response()->json(['message' => 'Product not found'], 404);
+            return response()->json([
+                'product_name' => $product->name,
+                'rating' => round($averageRating, 2),
+                'reviews' => $reviews
+            ], 200);
         } catch (\Exception $e) {
-            // Handle any other errors
-            return response()->json(['message' => 'An error occurred while updating the product rating.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to retrieve reviews', 'error' => $e->getMessage()], 500);
         }
     }
+
+
 }

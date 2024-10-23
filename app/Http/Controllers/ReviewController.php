@@ -29,10 +29,12 @@ class ReviewController extends Controller
         }
     }
 
+
+
     // Store a new review and update product rating
     public function store(Request $request, $order_id)
     {
-        // Xác thực yêu cầu
+        // Xác thực yêu cầu, không cần product_id nữa
         $request->validate([
             'product_reviews' => 'required|array',
             'product_reviews.*.content' => 'required|string',
@@ -53,14 +55,25 @@ class ReviewController extends Controller
             return response()->json(['message' => 'You can only review products for Completed orders.'], 403);
         }
 
-        // Lưu đánh giá cho từng sản phẩm trong order
-        foreach ($request->product_reviews as $reviewData) {
-            // Tìm sản phẩm trong order_items
-            $orderItem = $order->orderItems()->first(); // Lấy sản phẩm đầu tiên trong order
+        // Lấy tất cả các sản phẩm từ order_items của đơn hàng
+        $orderItems = $order->orderItems;
 
-            if (!$orderItem) {
-                return response()->json(['message' => 'No products found in this order.'], 404);
-            }
+        // Kiểm tra nếu số lượng order_items và reviews không khớp
+        if (count($orderItems) !== count($request->product_reviews)) {
+            return response()->json(['message' => 'Number of reviews does not match the number of products in the order.'], 400);
+        }
+
+        // Kiểm tra nếu người dùng đã review order này rồi
+        $existingReviews = Review::where('order_id', $order_id)->where('user_id', $user_id)->count();
+
+        if ($existingReviews > 0) {
+            return response()->json(['message' => 'You have already reviewed this order.'], 403);
+        }
+
+        // Lưu đánh giá cho từng sản phẩm
+        foreach ($request->product_reviews as $index => $reviewData) {
+            // Tìm sản phẩm tương ứng từ order_items dựa trên thứ tự
+            $orderItem = $orderItems[$index];
 
             // Lưu đánh giá
             try {
@@ -68,15 +81,27 @@ class ReviewController extends Controller
                     'content' => $reviewData['content'],
                     'rate' => $reviewData['rate'],
                     'user_id' => $user_id,
-                    'product_id' => $orderItem->product_id, // Sử dụng product_id từ order_items
+                    'product_id' => $orderItem->product_id, // Lấy product_id từ order_items theo thứ tự
                     'order_id' => $order_id, // Lưu order_id cho mỗi review
                 ]);
+                // Cập nhật rating cho sản phẩm sau khi tạo review
+                $this->updateProductRating($orderItem->product_id);
+
             } catch (\Exception $e) {
                 return response()->json(['message' => 'Failed to create review: ' . $e->getMessage()], 500);
             }
         }
 
         return response()->json(['message' => 'Reviews created successfully.'], 201);
+    }
+    public function updateProductRating($product_id)
+    {
+        // Retrieve the ratings for the product
+        $ratings = Review::where('product_id', $product_id)->pluck('rate');
+        // Calculate the average rating
+        $averageRating = $ratings->avg();
+        // Update the product rating
+        Product::where('product_id', $product_id)->update(['rating' => round($averageRating, 2)]);
     }
 
     public function update(Request $request, $order_id, $review_id)
@@ -134,22 +159,6 @@ class ReviewController extends Controller
         }
     }
 
-    // Update the average product rating
-    private function updateProductRating($product_id)
-    {
-        // Get the product and its reviews
-        $product = Product::find($product_id);
-        if (!$product) {
-            return;
-        }
-
-        // Calculate the average rating
-        $averageRating = Review::where('product_id', $product_id)->avg('rate');
-
-        // Update the product's rating field
-        $product->rating = round($averageRating, 2);
-        $product->save();
-    }
 
     public function countReviewsByProduct($product_id)
     {
