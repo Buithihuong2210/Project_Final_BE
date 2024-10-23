@@ -80,6 +80,8 @@ Route::prefix('deliveries')->group(function () {
 Route::post('/suggest-products', [ProductSuggestionController::class, 'suggestProducts']);
 
 Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
+Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
+
 
 
 
