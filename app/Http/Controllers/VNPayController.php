@@ -31,7 +31,7 @@ class VNPayController extends Controller
 
             // Đặt trạng thái đơn hàng dựa trên phương thức thanh toán
             if ($paymentMethod === 'Cash on Delivery') {
-                $order->status = 'Pending';
+                $order->status = 'Waiting for Delivery';
                 $order->save();
                 return response()->json(['message' => 'Đơn hàng đã được đặt thành công. Bạn hãy chờ giao hàng'], 200);
             }
