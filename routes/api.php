@@ -23,6 +23,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\VNPayController;
 use App\Http\Controllers\DeliveryController;
+//use App\Http\Controllers\OrderItemController;
 
 
 
@@ -75,12 +76,18 @@ Route::prefix('deliveries')->group(function () {
     Route::put('/{id}', [DeliveryController::class, 'updateStatus']);
 });
 
+//Route::get('/orders/{order_id}/items', [OrderItemController::class, 'getOrderItems']);
 
-//Route::post('/payment/vnpay/return', [VNPayController::class, 'handleReturn']);
+Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
+
+
+
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
 //Route::post('/payment/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
-Route::get('/payment/transaction-info', [VNPayController::class, 'getTransactionInfo']);
+Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
+
+
 
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
@@ -95,6 +102,13 @@ Route::prefix('responses')->group(function () {
 Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserController::class, 'getUserById']);
 });
+
+Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
+Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+Route::get('/orders/total-payments', [OrderController::class, 'getTotalPaymentsForBothMethods']);
+Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
+
+
 
 
 
@@ -129,6 +143,8 @@ Route::prefix('surveys')->group(function () {
         Route::get('/{id}', [CartController::class, 'show']);    // Show specific cart
         Route::put('/{item}', [CartController::class, 'update']); // Update specific cart item
         Route::delete('/{item}', [CartController::class, 'destroy']); // Delete specific cart item
+        Route::post('/complete', [CartController::class, 'completeCart']);
+
     });
 
     Route::prefix('shippings')->group(function () {
@@ -140,7 +156,6 @@ Route::prefix('surveys')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);  // Create a new order
         Route::get('/' ,[OrderController::class, 'showAll']);
-        Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
 
     });
 
@@ -150,8 +165,8 @@ Route::prefix('surveys')->group(function () {
     });
 
     Route::prefix('reviews')->group(function () {
-        Route::post('/{product_id}', [ReviewController::class, 'store']); // Create a review for a product
-        Route::put('/{review_id}', [ReviewController::class, 'update']); // Update a review
+        Route::post('/{order_id}', [ReviewController::class, 'store']);
+        Route::put('/{order_id}/{review_id}', [ReviewController::class, 'update']); // Update a review
         Route::delete('/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
         Route::get('/product/{product_id}', [ReviewController::class, 'getReviewsByProduct']);
         Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product

@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
@@ -29,70 +30,83 @@ class ReviewController extends Controller
     }
 
     // Store a new review and update product rating
-    public function store(Request $request, $product_id)
+    public function store(Request $request, $order_id)
     {
-        try {
-            // Validate request
-            $validator = Validator::make($request->all(), [
-                'content' => 'required|string',
-                'rate' => 'required|integer|between:1,5',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
-            }
-
-            // Check if the product exists
-            $product = Product::find($product_id);
-            if (!$product) {
-                return response()->json(['message' => 'Product not found'], 404);
-            }
-
-            // Create the review
-            $review = Review::create(array_merge($request->only(['content', 'rate']), [
-                'user_id' => auth()->id(),
-                'product_id' => $product_id,
-            ]));
-
-            // Update product rating
-            $this->updateProductRating($product_id);
-
-            return response()->json($review->load(['user', 'product']), 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error occurred while creating review', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    // Update an existing review and recalculate product rating
-    public function update(Request $request, $id)
-    {
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'content' => 'sometimes|required|string',
-            'rate' => 'sometimes|required|integer|between:1,5',
+        // Xác thực yêu cầu
+        $request->validate([
+            'product_reviews' => 'required|array',
+            'product_reviews.*.content' => 'required|string',
+            'product_reviews.*.rate' => 'required|integer|between:1,5',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+        // Lấy user_id từ thông tin người dùng đã xác thực
+        $user_id = Auth::id();
+
+        // Tìm đơn hàng dựa trên order_id từ request
+        $order = Order::find($order_id);
+        if (!$order) {
+            return response()->json(['message' => 'Order not found.'], 404);
         }
 
-        try {
-            // Find and update the review
-            $review = Review::find($id);
+        // Kiểm tra xem trạng thái đơn hàng có phải là "Delivered" không
+        if ($order->status !== 'Delivered') {
+            return response()->json(['message' => 'You can only review products for delivered orders.'], 403);
+        }
 
-            if ($review) {
-                $review->update($request->all());
+        // Lưu đánh giá cho từng sản phẩm trong order
+        foreach ($request->product_reviews as $reviewData) {
+            // Tìm sản phẩm trong order_items
+            $orderItem = $order->orderItems()->first(); // Lấy sản phẩm đầu tiên trong order
 
-                // Update product rating
-                $this->updateProductRating($review->product_id);
-
-                return response()->json($review->load(['user', 'product']), 200);
-            } else {
-                return response()->json(['message' => 'Review not found'], 404);
+            if (!$orderItem) {
+                return response()->json(['message' => 'No products found in this order.'], 404);
             }
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to update review', 'error' => $e->getMessage()], 500);
+
+            // Lưu đánh giá
+            try {
+                Review::create([
+                    'content' => $reviewData['content'],
+                    'rate' => $reviewData['rate'],
+                    'user_id' => $user_id,
+                    'product_id' => $orderItem->product_id, // Sử dụng product_id từ order_items
+                    'order_id' => $order_id, // Lưu order_id cho mỗi review
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Failed to create review: ' . $e->getMessage()], 500);
+            }
         }
+
+        return response()->json(['message' => 'Reviews created successfully.'], 201);
+    }
+
+    public function update(Request $request, $order_id, $review_id)
+    {
+        // Xác thực yêu cầu
+        $request->validate([
+            'content' => 'required|string',
+            'rate' => 'required|integer|between:1,5',
+        ]);
+
+        // Lấy user_id từ thông tin người dùng đã xác thực
+        $user_id = Auth::id();
+
+        // Tìm đánh giá dựa trên review_id và kiểm tra quyền sở hữu
+        $review = Review::where('review_id', $review_id)
+            ->where('user_id', $user_id)
+            ->where('order_id', $order_id)
+            ->first();
+
+        if (!$review) {
+            return response()->json(['message' => 'Review not found for this user and order.'], 404);
+        }
+
+        // Cập nhật nội dung và đánh giá
+        $review->content = $request->content; // Chỉ lấy content để lưu vào cột content
+        $review->rate = $request->rate;       // Lưu rating riêng biệt vào cột rate
+        // Lưu thay đổi
+        $review->save();
+
+        return response()->json(['message' => 'Review updated successfully.'], 200);
     }
 
     // Delete a review and recalculate product rating

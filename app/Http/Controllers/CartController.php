@@ -18,8 +18,13 @@ class CartController extends Controller
     public function index()
     {
         try {
-            // Find or create the shopping cart for the authenticated user
-            $cart = ShoppingCart::firstOrCreate(['user_id' => auth()->id()]);
+            // Find or create the active shopping cart for the authenticated user
+            $cart = ShoppingCart::where('user_id', auth()->id())
+                ->where('status', 'active') // Only get active cart
+                ->firstOrCreate([
+                    'user_id' => auth()->id(),
+                    'status' => 'active'
+                ]);
 
             // Get the cart with subtotal
             $cartData = $this->getCartWithSubtotal($cart);
@@ -48,8 +53,13 @@ class CartController extends Controller
             // Fetch the product to check its available quantity (stock)
             $product = Product::findOrFail($request->product_id);
 
-            // Find or create a shopping cart for the authenticated user
-            $cart = ShoppingCart::firstOrCreate(['user_id' => auth()->id()]);
+            // Find or create an active shopping cart for the authenticated user
+            $cart = ShoppingCart::where('user_id', auth()->id())
+                ->where('status', 'active') // Only get active cart
+                ->firstOrCreate([
+                    'user_id' => auth()->id(),
+                    'status' => 'active'
+                ]);
 
             // Check if the item already exists in the cart
             $cartItem = $cart->items()->where('product_id', $request->product_id)->first();
@@ -88,10 +98,38 @@ class CartController extends Controller
                 ]);
             }
 
+            // Calculate new subtotal after adding/updating the item
+            $subtotal = $cart->items()->sum('price');
+            $cart->subtotal = number_format($subtotal, 2, '.', ''); // Format subtotal
+            $cart->save(); // Save updated subtotal to the database
+
             // Reload the cart with updated items and products
             return response()->json($this->getCartWithSubtotal($cart), 201);
         } catch (Exception $e) {
             return response()->json(['error' => 'Error updating cart: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function completeCart()
+    {
+        try {
+            // Find the active shopping cart for the authenticated user
+            $cart = ShoppingCart::where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->first();
+
+            // Check if the cart exists
+            if (!$cart) {
+                return response()->json(['message' => 'No active cart found.'], 404);
+            }
+
+            // Update the cart status to completed after successful payment
+            $cart->status = 'completed';
+            $cart->save();
+
+            return response()->json(['message' => 'Cart marked as completed successfully.'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Error completing cart: ' . $e->getMessage()], 500);
         }
     }
 
