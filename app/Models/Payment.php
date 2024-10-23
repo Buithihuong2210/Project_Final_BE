@@ -21,6 +21,7 @@ class Payment extends Model
         'card_type',
         'pay_date',
         'status',
+        'amount'
     ];
 
     // Define relationships

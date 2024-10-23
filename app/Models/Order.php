@@ -13,6 +13,7 @@ class Order extends Model
     protected $table = 'orders';
     protected $primaryKey = 'order_id'; // Specify your custom primary key
     public $incrementing = true; // Ensure this is set to true for auto-incrementing
+
     // Allow mass assignment for these fields
     protected $fillable = [
         'user_id',
@@ -28,10 +29,9 @@ class Order extends Model
         'order_date',
         'status',
         'expected_delivery_date',
-        'order_date'
     ];
 
-    // Optionally, define relationships if needed
+    // Define relationships
     public function shipping()
     {
         return $this->belongsTo(Shipping::class, 'shipping_id');
@@ -50,6 +50,16 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class, 'order_id', 'order_id');
+    }
+
+    public function cart()
+    {
+        return $this->hasOne(ShoppingCart::class, 'user_id', 'user_id'); // Adjust the foreign key if needed
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class, 'order_id', 'order_id'); // Chỉ định khóa chính và khóa ngoại
     }
 
 }
