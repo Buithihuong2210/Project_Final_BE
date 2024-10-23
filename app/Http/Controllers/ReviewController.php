@@ -48,9 +48,9 @@ class ReviewController extends Controller
             return response()->json(['message' => 'Order not found.'], 404);
         }
 
-        // Kiểm tra xem trạng thái đơn hàng có phải là "Delivered" không
-        if ($order->status !== 'Delivered') {
-            return response()->json(['message' => 'You can only review products for delivered orders.'], 403);
+        // Kiểm tra xem trạng thái đơn hàng có phải là "Completed" không
+        if ($order->status !== 'Completed') {
+            return response()->json(['message' => 'You can only review products for Completed orders.'], 403);
         }
 
         // Lưu đánh giá cho từng sản phẩm trong order

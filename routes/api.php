@@ -23,7 +23,8 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\VNPayController;
 use App\Http\Controllers\DeliveryController;
-//use App\Http\Controllers\OrderItemController;
+use App\Http\Controllers\ProductSuggestionController;
+
 
 
 
@@ -76,7 +77,7 @@ Route::prefix('deliveries')->group(function () {
     Route::put('/{id}', [DeliveryController::class, 'updateStatus']);
 });
 
-//Route::get('/orders/{order_id}/items', [OrderItemController::class, 'getOrderItems']);
+Route::post('/suggest-products', [ProductSuggestionController::class, 'suggestProducts']);
 
 Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
 
