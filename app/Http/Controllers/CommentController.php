@@ -44,6 +44,7 @@ class CommentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+        
     }
 
     // Get all comments for a specific blog
@@ -53,6 +54,7 @@ class CommentController extends Controller
             // Get comments related to the blog and eager load relationships with user and replies
             $comments = Comment::where('blog_id', $blog_id)
                 ->with(['user:id,name,image,dob,role,phone,gender,email', 'replies.user:id,name,image,dob,role,phone,gender,email']) // Removed 'user:' prefix here
+                ->whereNull('parent_id') // Chỉ lấy các comment cha
                 ->get();
 
             // Check if comments are empty
