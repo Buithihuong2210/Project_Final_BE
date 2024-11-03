@@ -30,7 +30,6 @@ class ReviewController extends Controller
     }
 
 
-
     // Store a new review and update product rating
     public function store(Request $request, $order_id)
     {
@@ -106,56 +105,70 @@ class ReviewController extends Controller
 
     public function update(Request $request, $order_id, $review_id)
     {
-        // Xác thực yêu cầu
+        // Validate the request
         $request->validate([
             'content' => 'required|string',
             'rate' => 'required|integer|between:1,5',
         ]);
 
-        // Lấy user_id từ thông tin người dùng đã xác thực
         $user_id = Auth::id();
 
-        // Tìm đánh giá dựa trên review_id và kiểm tra quyền sở hữu
-        $review = Review::where('review_id', $review_id)
-            ->where('user_id', $user_id)
-            ->where('order_id', $order_id)
-            ->first();
+        try {
+            // Find the review
+            $review = Review::where('review_id', $review_id)
+                ->where('user_id', $user_id)
+                ->where('order_id', $order_id)
+                ->first();
 
-        if (!$review) {
-            return response()->json(['message' => 'Review not found for this user and order.'], 404);
+            // Check if the review exists
+            if (!$review) {
+                return response()->json(['message' => 'Review not found for this user and order.'], 404);
+            }
+
+            // Update review details
+            $review->content = $request->input('content'); // Ensure this is plain text
+            $review->rate = $request->input('rate');       // Ensure this is an integer
+
+            // Save changes
+            $review->save();
+
+            return response()->json(['message' => 'Review updated successfully.'], 200);
+
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error updating review: ' . $e->getMessage());
+
+            return response()->json(['message' => 'An error occurred while trying to update the review.'], 500);
         }
-
-        // Cập nhật nội dung và đánh giá
-        $review->content = $request->content; // Chỉ lấy content để lưu vào cột content
-        $review->rate = $request->rate;       // Lưu rating riêng biệt vào cột rate
-        // Lưu thay đổi
-        $review->save();
-
-        return response()->json(['message' => 'Review updated successfully.'], 200);
     }
 
     // Delete a review and recalculate product rating
-    public function destroy($id)
+    public function destroy($order_id, $review_id)
     {
+        $user_id = Auth::id();
+
         try {
-            // Find and delete the review
-            $review = Review::find($id);
+            // Find the review
+            $review = Review::where('review_id', $review_id)
+                ->where('user_id', $user_id)
+                ->where('order_id', $order_id)
+                ->first();
 
-            if ($review) {
-                $product_id = $review->product_id;
-
-                // Delete the review
-                $review->delete();
-
-                // Update product rating
-                $this->updateProductRating($product_id);
-
-                return response()->json(['message' => 'Review deleted'], 200);
-            } else {
-                return response()->json(['message' => 'Review not found'], 404);
+            // Check if the review exists
+            if (!$review) {
+                return response()->json(['message' => 'Review not found for this user and order.'], 404);
             }
+
+            // Delete the review
+            $review->delete();
+
+            return response()->json(['message' => 'Review deleted successfully.'], 200);
+
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to delete review', 'error' => $e->getMessage()], 500);
+            // Log the error for debugging
+            \Log::error('Error deleting review: ' . $e->getMessage());
+
+            return response()->json(['message' => 'An error occurred while trying to delete the review.'], 500);
         }
     }
 

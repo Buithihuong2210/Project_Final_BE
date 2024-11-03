@@ -170,7 +170,7 @@ Route::prefix('surveys')->group(function () {
     Route::prefix('reviews')->group(function () {
         Route::post('/{order_id}', [ReviewController::class, 'store']);
         Route::put('/{order_id}/{review_id}', [ReviewController::class, 'update']); // Update a review
-        Route::delete('/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
+        Route::delete('/{order_id}/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
         Route::get('/product/{product_id}', [ReviewController::class, 'getReviewsByProduct']);
         Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product
     });

@@ -30,7 +30,6 @@ class ProductController extends Controller
                     'brand_id' => $product->brand_id,
                     'images' => $product->images,
                     'status' => $product->status,
-                    'short_description' => $product->short_description,
                     'volume' => $product->volume,
                     'nature' => $product->nature,
                     'product_type' => $product->product_type, // New field
@@ -63,7 +62,6 @@ class ProductController extends Controller
                 'brand_id' => 'required|exists:brands,brand_id',
                 'images' => 'required|array',
                 'images.*' => 'nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
-                'short_description' => 'nullable|string',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
                 'product_type' => 'nullable|string', // New field validation
@@ -112,7 +110,6 @@ class ProductController extends Controller
                 'brand_id' => $product->brand_id,
                 'images' => $product->images,
                 'status' => $product->status,
-                'short_description' => $product->short_description,
                 'volume' => $product->volume,
                 'nature' => $product->nature,
                 'rating' => $product->rating, // Add the rating
@@ -144,7 +141,6 @@ class ProductController extends Controller
                 'brand_id' => 'sometimes|required|exists:brands,brand_id',
                 'images' => 'sometimes|nullable|array',
                 'images.*' => 'nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
-                'short_description' => 'nullable|string',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
                 'product_type' => 'sometimes|nullable|string', // New field validation
@@ -188,7 +184,6 @@ class ProductController extends Controller
                 'brand_id' => $product->brand_id,
                 'images' => json_decode($product->images), // Decode for response
                 'status' => $product->status,
-                'short_description' => $product->short_description,
                 'volume' => $product->volume,
                 'nature' => $product->nature,
                 'rating' => $product->rating,
@@ -269,6 +264,5 @@ class ProductController extends Controller
             return response()->json(['message' => 'Failed to retrieve reviews', 'error' => $e->getMessage()], 500);
         }
     }
-
 
 }
