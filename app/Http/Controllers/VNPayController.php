@@ -31,7 +31,7 @@ class VNPayController extends Controller
 
             // Đặt trạng thái đơn hàng dựa trên phương thức thanh toán
             if ($paymentMethod === 'Cash on Delivery') {
-                $order->status = 'Pending';
+                $order->status = 'Waiting for Delivery';
                 $order->save();
                 return response()->json(['message' => 'Đơn hàng đã được đặt thành công. Bạn hãy chờ giao hàng'], 200);
             }
@@ -96,16 +96,28 @@ class VNPayController extends Controller
     // Xử lý kết quả sau khi thanh toán VNPay
     public function handlePaymentReturn(Request $request)
     {
+
         // Lấy các tham số từ request
         $transactionNo = $request->input('vnp_TransactionNo');
         $orderId = $request->input('vnp_TxnRef'); // ID đơn hàng
         $responseCode = $request->input('vnp_ResponseCode');
         $payDate = $request->input('vnp_PayDate');
+        $amount = $request->input('vnp_Amount'); // Lấy số tiền từ tham số URL
+
+        // Kiểm tra mã phản hồi
+        $order = Order::find($orderId);
+        if (!$order) {
+            return response()->json(['error' => 'Đơn hàng không tồn tại.'], 404);
+        }
 
         // Kiểm tra mã phản hồi
         if ($responseCode === '00') {
             // Cập nhật trạng thái đơn hàng thành 'Completed'
-            DB::table('orders')->where('order_id', $orderId)->update(['status' => 'Completed']);
+            DB::table('orders')->where('order_id', $orderId)->update([
+                'status' => 'Waiting for Delivery', // Đang chờ xử lý giao hàng
+                'payment_status' => 'Paid', // Đã thanh toán
+                'updated_at' => now(), // Cập nhật thời gian
+            ]);
 
             // Ghi lại giao dịch vào bảng payments
             DB::table('payments')->insert([
@@ -115,16 +127,27 @@ class VNPayController extends Controller
                 'card_type' => $request->input('vnp_CardType'),
                 'pay_date' => now(), // Use current timestamp
                 'status' => 'success', // Transaction status
+                'amount' => $amount / 100, // Lưu số tiền đã thanh toán (vnp_Amount)
                 'created_at' => now(), // Thêm created_at
                 'updated_at' => now(), // Thêm updated_at
             ]);
 
             return response()->json(['message' => 'Payment successful. Order updated.'], 200);
         } else {
-            // Cập nhật trạng thái đơn hàng thành 'Failed'
-            DB::table('orders')->where('order_id', $orderId)->update(['status' => 'Failed']);
+            // Nếu thanh toán thất bại, cập nhật trạng thái đơn hàng
+            DB::table('orders')->where('order_id', $orderId)->update([
+                'status' => 'Failed',              // Trạng thái thanh toán thất bại
+                'payment_status' => 'Failed',      // Trạng thái thanh toán thất bại
+                'updated_at' => now(),             // Cập nhật thời gian
+            ]);
 
-            return response()->json(['message' => 'Payment failed.'], 400);
+            // Hủy đơn hàng nếu cả trạng thái đơn hàng và thanh toán đều 'Failed'
+            DB::table('orders')->where('order_id', $orderId)->update([
+                'status' => 'Canceled',            // Trạng thái đơn hàng bị hủy
+                'updated_at' => now(),             // Cập nhật thời gian
+            ]);
+
+            return response()->json(['message' => 'Payment failed. Order has been canceled.'], 400);
         }
     }
 
@@ -140,6 +163,19 @@ class VNPayController extends Controller
         } catch (\Exception $e) {
             // Trả về lỗi nếu có sự cố xảy ra
             return response()->json(['error' => 'Unable to fetch payments: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getTotalPayments()
+    {
+        try {
+            // Tính tổng số tiền đã thanh toán từ bảng payments
+            $totalAmount = DB::table('payments')->sum('amount');
+
+            $formattedAmount = number_format($totalAmount, 0) . ' VND';
+
+            return response()->json(['total_amount' => $formattedAmount], 200);        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unable to fetch total payments: ' . $e->getMessage()], 500);
         }
     }
 

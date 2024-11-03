@@ -26,7 +26,10 @@ class Product extends Model
         'short_description',
         'volume',
         'nature',
-        'rating', // Add rating to fillable
+        'rating',
+        'product_type', // Thêm loại sản phẩm
+        'main_ingredient', // Thêm thành phần chính
+        'target_skin_type', // Thêm đối tượng sử dụng
     ];
 
     // Define the status constants

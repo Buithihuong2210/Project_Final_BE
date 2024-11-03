@@ -65,6 +65,7 @@ class BrandController extends Controller
                 'image' => 'nullable|string|url'
             ]);
 
+
             $brand->update($request->all());
             return response()->json($brand, 200);
 
