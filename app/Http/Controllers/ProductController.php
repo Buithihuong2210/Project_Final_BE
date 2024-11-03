@@ -28,7 +28,7 @@ class ProductController extends Controller
                     'discounted_price' => $product->discounted_price,
                     'quantity' => $product->quantity,
                     'brand_id' => $product->brand_id,
-                    'images' => $product->images,
+                    'image' => $product->images, // Return single image
                     'status' => $product->status,
                     'volume' => $product->volume,
                     'nature' => $product->nature,
@@ -60,18 +60,17 @@ class ProductController extends Controller
                 'discount' => 'nullable|numeric|min:0|max:100',
                 'quantity' => 'nullable|numeric|min:0|max:500',
                 'brand_id' => 'required|exists:brands,brand_id',
-                'images' => 'required|array',
-                'images.*' => 'nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
+                'image' => 'required|url|ends_with:.jpg,.jpeg,.png,.gif,.svg', // Changed to single image
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
                 'product_type' => 'nullable|string', // New field validation
                 'main_ingredient' => 'nullable|string', // New field validation
                 'target_skin_type' => 'nullable|string', // New field validation
-
             ]);
 
             $product_data = $request->all();
             $product_data['status'] = 'available';
+            $product_data['images'] = $request->input('image'); // Assign single image
 
             // Chỉ lưu mảng images mà không cần json_encode
             // Trường images sẽ được tự động xử lý thành JSON nếu bạn đã khai báo trong $casts
@@ -108,7 +107,7 @@ class ProductController extends Controller
                 'discounted_price' => $product->discounted_price,
                 'quantity' => $product->quantity,
                 'brand_id' => $product->brand_id,
-                'images' => $product->images,
+                'image' => $product->image,
                 'status' => $product->status,
                 'volume' => $product->volume,
                 'nature' => $product->nature,
@@ -139,8 +138,7 @@ class ProductController extends Controller
                 'price' => 'sometimes|required|numeric',
                 'discount' => 'nullable|numeric|min:0|max:100',
                 'brand_id' => 'sometimes|required|exists:brands,brand_id',
-                'images' => 'sometimes|nullable|array',
-                'images.*' => 'nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
+                'image' => 'sometimes|nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
                 'product_type' => 'sometimes|nullable|string', // New field validation
@@ -150,12 +148,9 @@ class ProductController extends Controller
 
             $product_data = $request->all();
 
-            // Check if 'images' is present in the request and is an array
-            if ($request->has('images')) {
-                if (is_array($request->input('images'))) {
-                    // Convert images to JSON format without escape characters
-                    $product_data['images'] = json_encode($request->input('images'));
-                }
+            // Handle image update
+            if ($request->has('image')) {
+                $product_data['image'] = $request->input('image'); // Sử dụng 'image' thay vì 'images'
             }
 
             // Calculate discounted price
@@ -182,7 +177,7 @@ class ProductController extends Controller
                 'discounted_price' => $product->discounted_price,
                 'quantity' => $product->quantity,
                 'brand_id' => $product->brand_id,
-                'images' => json_decode($product->images), // Decode for response
+                'image' => $product->image, // Return single image
                 'status' => $product->status,
                 'volume' => $product->volume,
                 'nature' => $product->nature,
