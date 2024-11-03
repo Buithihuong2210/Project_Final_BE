@@ -21,7 +21,7 @@ class Product extends Model
         'discounted_price',
         'quantity',
         'brand_id',
-        'images',
+        'image',
         'status',
         'short_description',
         'volume',
