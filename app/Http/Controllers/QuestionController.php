@@ -24,10 +24,7 @@ class QuestionController extends Controller
 
             // If validation fails, return errors
             if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                ], 422);
+                return response()->json($validator->errors(), 422);
             }
 
             // Find the survey
@@ -41,14 +38,24 @@ class QuestionController extends Controller
                 'category' => $request->input('category'),
             ]);
 
-            return response()->json([
-                'message' => 'Question created successfully',
-                'data' => $question,
-            ], 201);
+            // Prepare the response structure with only the necessary data fields
+            $questionData = [
+                "question_id" => $question->question_id,
+                "survey_id" => $survey->survey_id,
+                "question_text" => $question->question_text,
+                "category" => $question->category,
+                "type" => $question->type,
+                "options" => $question->options,
+                "question_type" => $question->type,
+                "created_at" => $question->created_at->toIso8601String(),
+                "updated_at" => $question->updated_at->toIso8601String(),
+            ];
+
+            // Return response as a plain array without additional wrapper
+            return response()->json([$questionData], 201);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to create question',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -58,17 +65,29 @@ class QuestionController extends Controller
     public function index($survey_id)
     {
         try {
+            // Find the survey
             $survey = Survey::findOrFail($survey_id);
-            $questions = $survey->questions;
 
-            return response()->json([
-                'message' => 'Questions retrieved successfully',
-                'data' => $questions,
-            ], 200);
+            // Get all questions for the survey
+            $questions = $survey->questions->map(function ($question) {
+                return [
+                    "question_id" => $question->question_id,
+                    "survey_id" => $question->survey_id,
+                    "question_text" => $question->question_text,
+                    "category" => $question->category,
+                    "type" => $question->type,
+                    "options" => $question->options,
+                    "question_type" => $question->type,
+                    "created_at" => $question->created_at->toIso8601String(),
+                    "updated_at" => $question->updated_at->toIso8601String(),
+                ];
+            });
+
+            // Return the questions as a plain array
+            return response()->json($questions, 200);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to retrieve questions',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -78,17 +97,28 @@ class QuestionController extends Controller
     public function show($survey_id, $question_id)
     {
         try {
+            // Find the survey and question
             $survey = Survey::findOrFail($survey_id);
             $question = $survey->questions()->findOrFail($question_id);
 
-            return response()->json([
-                'message' => 'Question retrieved successfully',
-                'data' => $question,
-            ], 200);
+            // Format the question data to match the desired structure
+            $questionData = [
+                "question_id" => $question->question_id,
+                "survey_id" => $question->survey_id,
+                "question_text" => $question->question_text,
+                "category" => $question->category,
+                "type" => $question->type,
+                "options" => $question->options,
+                "question_type" => $question->type,
+                "created_at" => $question->created_at->toIso8601String(),
+                "updated_at" => $question->updated_at->toIso8601String(),
+            ];
+
+            // Return the formatted question data directly
+            return response()->json($questionData, 200);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to retrieve question',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -104,15 +134,12 @@ class QuestionController extends Controller
                 'type' => 'sometimes|required|string|in:multiple_choice,text',
                 'options' => 'sometimes|required_if:type,multiple_choice|array|min:2',
                 'options.*' => 'required_if:type,multiple_choice|string',
-                'category' => 'sometimes|required|string|in:Interest,Goal,Factor', // Validate the category field
+                'category' => 'sometimes|required|string|in:Interest,Goal,Factor',
             ]);
 
             // If validation fails, return errors
             if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                ], 422);
+                return response()->json($validator->errors(), 422);
             }
 
             // Find the survey and question
@@ -124,17 +151,27 @@ class QuestionController extends Controller
                 'question_text' => $request->input('question_text', $question->question_text),
                 'type' => $request->input('type', $question->type),
                 'options' => $request->input('type') === 'multiple_choice' ? $request->input('options', $question->options) : null,
-                'category' => $request->input('category', $question->category), // Update category
+                'category' => $request->input('category', $question->category),
             ]);
 
-            return response()->json([
-                'message' => 'Question updated successfully',
-                'data' => $question,
-            ], 200);
+            // Prepare the response with the updated question details
+            $questionData = [
+                "question_id" => $question->question_id,
+                "survey_id" => $question->survey_id,
+                "question_text" => $question->question_text,
+                "category" => $question->category,
+                "type" => $question->type,
+                "options" => $question->options,
+                "question_type" => $question->type,
+                "created_at" => $question->created_at->toIso8601String(),
+                "updated_at" => $question->updated_at->toIso8601String(),
+            ];
+
+            // Return the updated question data without additional wrappers
+            return response()->json($questionData, 200);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to update question',
                 'error' => $e->getMessage(),
             ], 500);
         }
