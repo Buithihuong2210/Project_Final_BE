@@ -25,14 +25,14 @@ class ResponseController extends Controller
             // Kiểm tra xem khảo sát có tồn tại không
             $survey = Survey::findOrFail($survey_id);
 
-            // Lấy tất cả question_id của các câu hỏi trong khảo sát
-            $allQuestions = Question::where('survey_id', $survey_id)->pluck('question_id')->toArray();
+            // Lấy tất cả code của các câu hỏi trong khảo sát
+            $allQuestionsCodes = Question::where('survey_id', $survey_id)->pluck('code')->toArray();
 
-            // Lấy tất cả question_id của các câu trả lời đã gửi
-            $answeredQuestionIds = array_column($validated['responses'], 'question_id');
+            // Lấy tất cả code của các câu trả lời đã gửi
+            $answeredQuestionCodes = array_column($validated['responses'], 'code');
 
             // Kiểm tra nếu tất cả các câu hỏi đã được trả lời
-            if (array_diff($allQuestions, $answeredQuestionIds)) {
+            if (array_diff($allQuestionsCodes, $answeredQuestionCodes)) {
                 return response()->json(['error' => 'You must answer all questions in the survey.'], 400);
             }
 
@@ -40,36 +40,25 @@ class ResponseController extends Controller
 
             // Lặp qua các phản hồi và lưu trữ
             foreach ($validated['responses'] as $response) {
-                $question = Question::where('question_id', $response['question_id'])
+                // Tìm câu hỏi dựa trên code thay vì question_id
+                $question = Question::where('code', $response['code'])
                     ->where('survey_id', $survey_id)
                     ->firstOrFail();
 
                 // Lưu câu trả lời vào mảng
-                $answers[$response['question_id']] = $response['answer'];
+                $answers[$question->code] = $response['answer'];
 
                 // Tạo bản ghi phản hồi
                 Response::create([
                     'survey_id' => $survey_id,
-                    'question_id' => $response['question_id'],
+                    'question_id' => $question->question_id, // Sử dụng question_id để lưu vào bảng responses
                     'user_id' => auth()->id(),
                     'answer_text' => $response['answer'],
                 ]);
             }
 
             // Lọc sản phẩm dựa trên câu trả lời
-            $recommendedProducts = Product::query()
-                ->when(isset($answers[2]), function ($query) use ($answers) {
-                    return $query->where('target_skin_type', $answers[2]); // Lọc theo loại da
-                })
-                ->when(isset($answers[3]), function ($query) use ($answers) {
-                    return $query->where('product_type', $answers[3]); // Lọc theo loại sản phẩm
-                })
-                ->when(isset($answers[34]), function ($query) use ($answers) {
-                    return $query->where('main_ingredient', $answers[34]); // Lọc theo thành phần chứa
-                ->when(isset($answers[7]), function ($query) use ($answers) {
-                    return $query->where('main_ingredient', $answers[7]); // Lọc theo thành phần chứa
-                })
-                ->get();
+
 
             return response()->json([
                 'message' => 'Response submitted successfully.',
