@@ -62,8 +62,6 @@ Route::group(['middleware' => 'web'], function () {
 
 Route::prefix('upload')->group(function () {
     Route::post('/', [ImageController::class, 'uploadImage']);
-    Route::delete('/{id}', [ImageController::class, 'destroy']); // Delete a specific image
-    Route::get('/test', [ImageController::class, 'getImage']);
 });
 
 Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
@@ -86,7 +84,6 @@ Route::get('/products/{product_id}/reviews', [ProductController::class, 'getRevi
 
 
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
-//Route::posq'/payment/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 
@@ -96,10 +93,9 @@ Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
 
 
-
-
 Route::prefix('responses')->group(function () {
-    Route::get('/', [ResponseController::class, 'index']); // List all responses
+    Route::get('/', [ResponseController::class, 'index']);
+    Route::get('/my', [ResponseController::class, 'showResponse']);
 });
 
 Route::prefix('users')->group(function () {
@@ -137,6 +133,9 @@ Route::prefix('surveys')->group(function () {
         Route::post('/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
     });
 
+    Route::prefix('responses')->group(function () {
+        Route::get('/my', [ResponseController::class, 'showResponse']);
+    });
 
 
 
@@ -302,7 +301,6 @@ Route::get('/', [ShippingController::class, 'index']); // List all shipping reco
 Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(function () {
 
         Route::prefix('blogs')->group(function () {
-        Route::post('/', [BlogController::class, 'store']);
         Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
         Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
         Route::get('/{blog}', [BlogController::class, 'show']);
@@ -310,5 +308,27 @@ Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(functi
         Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
         Route::put('/{blog_id}/likes', [BlogController::class, 'setLikes']);
     });
+
+    Route::prefix('surveys')->group(function () {
+        Route::post('/', [SurveyController::class, 'store']); // Create a new survey
+        Route::get('/', [SurveyController::class, 'index']); // List all surveys
+        Route::get('/{survey_id}', [SurveyController::class, 'show']); // Show a specific survey
+        Route::put('/{survey_id}', [SurveyController::class, 'update']); // Update a specific survey
+        Route::delete('/{survey_id}', [SurveyController::class, 'destroy']); // Delete a specific survey
+    });
+
+    // Question management routes
+    Route::prefix('surveys/{survey_id}/questions')->group(function () {
+        Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
+        Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
+        Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
+        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
+        Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
+    });
+
+    Route::prefix('responses')->group(function () {
+        Route::get('/', [ResponseController::class, 'index']);
+    });
+
 });
 
