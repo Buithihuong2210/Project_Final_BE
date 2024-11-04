@@ -63,9 +63,9 @@ class ProductController extends Controller
                 'image' => 'required|url|ends_with:.jpg,.jpeg,.png,.gif,.svg', // Changed to single image
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
-                'product_type' => 'nullable|string', // New field validation
-                'main_ingredient' => 'nullable|string', // New field validation
-                'target_skin_type' => 'nullable|string', // New field validation
+                'product_type' => 'nullable|string|in:Cleanser,Toner,Serum,Moisturizer,Sunscreen,Face Mask,Exfoliator,Treatment Cream,Facial Oil,Eye Cream', // Fixed values for product_type
+                'main_ingredient' => 'nullable|string|in:Hyaluronic Acid,Vitamin C,Retinol,Salicylic Acid (BHA),Glycolic Acid (AHA),Niacinamide,Ceramides,Peptides,Tea Tree Oil,Aloe Vera', // Fixed values for main_ingredient
+                'target_skin_type' => 'nullable|string|in:Oily Skin,Dry Skin,Combination Skin,Sensitive Skin,Acne-Prone Skin,Mature Skin,Normal Skin,Dull Skin', // Fixed values for target_skin_type
             ]);
 
             $product_data = $request->all();
@@ -141,9 +141,9 @@ class ProductController extends Controller
                 'image' => 'sometimes|nullable|url|ends_with:.jpg,.jpeg,.png,.gif,.svg',
                 'volume' => 'nullable|numeric',
                 'nature' => 'nullable|string|in:new,best seller,exclusive',
-                'product_type' => 'sometimes|nullable|string', // New field validation
-                'main_ingredient' => 'sometimes|nullable|string', // New field validation
-                'target_skin_type' => 'sometimes|nullable|string', // New field validation
+                'product_type' => 'nullable|string|in:Cleanser,Toner,Serum,Moisturizer,Sunscreen,Face Mask,Exfoliator,Treatment Cream,Facial Oil,Eye Cream', // Fixed values for product_type
+                'main_ingredient' => 'nullable|string|in:Hyaluronic Acid,Vitamin C,Retinol,Salicylic Acid (BHA),Glycolic Acid (AHA),Niacinamide,Ceramides,Peptides,Tea Tree Oil,Aloe Vera', // Fixed values for main_ingredient
+                'target_skin_type' => 'nullable|string|in:Oily Skin,Dry Skin,Combination Skin,Sensitive Skin,Acne-Prone Skin,Mature Skin,Normal Skin,Dull Skin', // Fixed values for target_skin_type
             ]);
 
             $product_data = $request->all();

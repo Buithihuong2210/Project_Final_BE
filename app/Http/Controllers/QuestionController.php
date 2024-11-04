@@ -20,6 +20,7 @@ class QuestionController extends Controller
                 'options' => 'required_if:type,multiple_choice|array|min:2',
                 'options.*' => 'required_if:type,multiple_choice|string',
                 'category' => 'required|string|in:Interest,Goal,Factor',
+                'code' => 'required|string|max:50|unique:questions,code',
             ]);
 
             // If validation fails, return errors
@@ -36,6 +37,8 @@ class QuestionController extends Controller
                 'type' => $request->input('type'),
                 'options' => $request->input('type') === 'multiple_choice' ? $request->input('options') : null,
                 'category' => $request->input('category'),
+                'code' => $request->input('code'), // Thêm code
+
             ]);
 
             // Prepare the response structure with only the necessary data fields
@@ -46,6 +49,7 @@ class QuestionController extends Controller
                 "category" => $question->category,
                 "type" => $question->type,
                 "options" => $question->options,
+                "code" => $question->code, // Thêm code vào response
                 "question_type" => $question->type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
@@ -77,6 +81,7 @@ class QuestionController extends Controller
                     "category" => $question->category,
                     "type" => $question->type,
                     "options" => $question->options,
+                    "code" => $question->code, // Thêm code vào response
                     "question_type" => $question->type,
                     "created_at" => $question->created_at->toIso8601String(),
                     "updated_at" => $question->updated_at->toIso8601String(),
@@ -109,6 +114,7 @@ class QuestionController extends Controller
                 "category" => $question->category,
                 "type" => $question->type,
                 "options" => $question->options,
+                "code" => $question->code, // Thêm code vào response
                 "question_type" => $question->type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
@@ -135,6 +141,7 @@ class QuestionController extends Controller
                 'options' => 'sometimes|required_if:type,multiple_choice|array|min:2',
                 'options.*' => 'required_if:type,multiple_choice|string',
                 'category' => 'sometimes|required|string|in:Interest,Goal,Factor',
+                'code' => 'sometimes|required|string|max:255|unique:questions,code,' . $question_id . ',question_id', // Đảm bảo sử dụng question_id
             ]);
 
             // If validation fails, return errors
@@ -152,6 +159,7 @@ class QuestionController extends Controller
                 'type' => $request->input('type', $question->type),
                 'options' => $request->input('type') === 'multiple_choice' ? $request->input('options', $question->options) : null,
                 'category' => $request->input('category', $question->category),
+                'code' => $request->input('code', $question->code),
             ]);
 
             // Prepare the response with the updated question details
@@ -162,12 +170,13 @@ class QuestionController extends Controller
                 "category" => $question->category,
                 "type" => $question->type,
                 "options" => $question->options,
+                "code" => $question->code,
                 "question_type" => $question->type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
             ];
 
-            // Return the updated question data without additional wrappers
+            // Return the updated question data
             return response()->json($questionData, 200);
 
         } catch (\Exception $e) {
