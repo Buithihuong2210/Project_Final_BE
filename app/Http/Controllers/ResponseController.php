@@ -70,10 +70,7 @@ class ResponseController extends Controller
                 })
                 ->get();
 
-            return response()->json([
-                'message' => 'Response submitted successfully.',
-                'recommended_products' => $recommendedProducts,
-            ], 201);
+            return response()->json($recommendedProducts, 201);
 
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'Survey or question not found.'], 404);
