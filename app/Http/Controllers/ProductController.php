@@ -28,7 +28,7 @@ class ProductController extends Controller
                     'discounted_price' => $product->discounted_price,
                     'quantity' => $product->quantity,
                     'brand_id' => $product->brand_id,
-                    'image' => $product->images, // Return single image
+                    'image' => $product->image, // Return single image
                     'status' => $product->status,
                     'volume' => $product->volume,
                     'nature' => $product->nature,
