@@ -23,13 +23,26 @@ class ResponseController extends Controller
 
         try {
             // Kiểm tra xem khảo sát có tồn tại không
-            Survey::findOrFail($survey_id);
+            $survey = Survey::findOrFail($survey_id);
+
+            // Lấy tất cả question_id của các câu hỏi trong khảo sát
+            $allQuestions = Question::where('survey_id', $survey_id)->pluck('question_id')->toArray();
+
+            // Lấy tất cả question_id của các câu trả lời đã gửi
+            $answeredQuestionIds = array_column($validated['responses'], 'question_id');
+
+            // Kiểm tra nếu tất cả các câu hỏi đã được trả lời
+            if (array_diff($allQuestions, $answeredQuestionIds)) {
+                return response()->json(['error' => 'You must answer all questions in the survey.'], 400);
+            }
 
             $answers = [];
 
             // Lặp qua các phản hồi và lưu trữ
             foreach ($validated['responses'] as $response) {
-                $question = Question::findOrFail($response['question_id']);
+                $question = Question::where('question_id', $response['question_id'])
+                    ->where('survey_id', $survey_id)
+                    ->firstOrFail();
 
                 // Lưu câu trả lời vào mảng
                 $answers[$response['question_id']] = $response['answer'];
@@ -52,7 +65,7 @@ class ResponseController extends Controller
                     return $query->where('product_type', $answers[30]); // Lọc theo loại sản phẩm
                 })
                 ->when(isset($answers[34]), function ($query) use ($answers) {
-                    return $query->where('main_ingredient', $answers[34]); // Lọc theo thành phần chính
+                    return $query->where('main_ingredient', $answers[34]); // Lọc theo thành phần chứa
                 })
                 ->get();
 
@@ -64,38 +77,9 @@ class ResponseController extends Controller
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'Survey or question not found.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to submit response.'], 500);
+            return response()->json(['error' => 'Failed to submit response.', 'details' => $e->getMessage()], 500);
         }
     }
-
-// Phương thức để lấy sản phẩm khuyến nghị dựa trên phản hồi của người dùng
-    protected function getRecommendedProducts($responses)
-    {
-        // Tạo một mảng để lưu trữ các điều kiện tìm kiếm sản phẩm
-        $conditions = [];
-
-        // Định nghĩa ánh xạ giữa ID câu hỏi và thuộc tính sản phẩm
-        $questionToProductField = [
-            1 => 'target_skin_type', // ID câu hỏi loại da
-            2 => 'product_type', // ID câu hỏi ưu tiên sản phẩm
-            3 => 'main_ingredient', // ID câu hỏi thành phần chính
-            // Thêm ánh xạ cho các câu hỏi khác nếu cần
-        ];
-
-        foreach ($responses as $response) {
-            // Kiểm tra xem ID câu hỏi có trong ánh xạ không
-            if (array_key_exists($response['question_id'], $questionToProductField)) {
-                $productField = $questionToProductField[$response['question_id']];
-                $conditions[$productField] = $response['answer']; // Lưu trữ điều kiện
-            }
-        }
-
-        // Tìm kiếm các sản phẩm khuyến nghị dựa trên các điều kiện
-        $recommendedProducts = Product::where($conditions)->get();
-
-        return $recommendedProducts;
-    }
-
 
 
     // Show a specific response by its ID
