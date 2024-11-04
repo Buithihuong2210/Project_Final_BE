@@ -11,7 +11,7 @@ class Question extends Model
 
     protected $table = 'questions';
     protected $primaryKey = 'question_id'; // Đảm bảo tên này đúng
-    public $incrementing = false; // Nếu khóa chính không tự tăng
+    public $incrementing = true; // Nếu khóa chính không tự tăng
 
     protected $fillable = [
         'survey_id',
