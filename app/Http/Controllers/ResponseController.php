@@ -140,29 +140,58 @@ class ResponseController extends Controller
     }
 
     // Update a specific response by its ID
-    public function update(Request $request, $response_id)
+    public function update(Request $request, $survey_id)
     {
-        // Validate that 'answer_text' is provided
+        // Validate rằng 'responses' đã được cung cấp và là một mảng
         $validated = $request->validate([
-            'answer_text' => 'required|string', // Expecting answer_text to be a string
+            'responses' => 'required|array',
         ]);
 
         try {
-            // Find the response by its ID
-            $response = Response::findOrFail($response_id);
+            // Kiểm tra xem khảo sát có tồn tại không
+            $survey = Survey::findOrFail($survey_id);
 
-            // Update the response
-            $response->update($validated);
+            // Lặp qua các phản hồi và cập nhật
+            foreach ($validated['responses'] as $response) {
+                // Tìm câu hỏi dựa trên code thay vì question_id
+                $question = Question::where('code', $response['code'])
+                    ->where('survey_id', $survey_id)
+                    ->firstOrFail();
 
-            // Return the updated response data with a 200 status code
-            return response()->json($response, 200);
+                // Cập nhật hoặc tạo mới bản ghi phản hồi
+                Response::updateOrCreate(
+                    [
+                        'survey_id' => $survey_id,
+                        'question_id' => $question->question_id,
+                        'user_id' => auth()->id(),
+                    ],
+                    [
+                        'answer_text' => $response['answer'],
+                    ]
+                );
+            }
+
+            // Lọc sản phẩm dựa trên các câu trả lời
+            $answers = array_column($validated['responses'], 'answer', 'code');
+
+            $recommendedProducts = Product::query()
+                ->when(isset($answers['Q1']), function ($query) use ($answers) {
+                    return $query->where('target_skin_type', $answers['Q1']); // Lọc theo loại da
+                })
+                ->when(isset($answers['Q2']), function ($query) use ($answers) {
+                    return $query->where('product_type', $answers['Q2']); // Lọc theo loại sản phẩm
+                })
+                ->when(isset($answers['Q6']), function ($query) use ($answers) {
+                    return $query->where('main_ingredient', $answers['Q6']); // Lọc theo thành phần chứa
+                })
+                ->get();
+
+            return response()->json($recommendedProducts, 200);
 
         } catch (ModelNotFoundException $e) {
-            // Return a 404 error if the response is not found
-            return response()->json(['error' => 'Response not found.'], 404);
+            return response()->json(['error' => 'Survey or question not found.'], 404);
         } catch (\Exception $e) {
-            // Return a 500 error for any other failure
-            return response()->json(['error' => 'Failed to update response.'], 500);
+            return response()->json(['error' => 'Failed to update responses.', 'details' => $e->getMessage()], 500);
         }
     }
 

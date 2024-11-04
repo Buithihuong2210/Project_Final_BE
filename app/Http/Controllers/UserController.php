@@ -123,4 +123,20 @@ class UserController extends Controller
             ], 500);
         }
     }
+    public function updateRole(Request $request, $userId)
+    {
+        $request->validate([
+            'role' => 'required|string|in:user,staff,admin',
+        ]);
+
+        $user = User::findOrFail($userId);
+        $user->role = $request->input('role');
+        $user->save();
+
+        return response()->json([
+            'message' => 'User role updated successfully',
+            'user' => $user,
+        ]);
+    }
+
 }
