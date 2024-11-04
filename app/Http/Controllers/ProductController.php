@@ -86,7 +86,7 @@ class ProductController extends Controller
 
             return response()->json($product, 201);
         } catch (ValidationException $e) {
-            return response()->json(['errors' => $e->errors()], 422);
+            return response()->json(['message' => 'Please fill in all information', 'error' => $e->errors()], 422);
         } catch (Exception $e) {
             return response()->json(['message' => 'An error occurred while creating the product.', 'error' => $e->getMessage()], 500);
         }

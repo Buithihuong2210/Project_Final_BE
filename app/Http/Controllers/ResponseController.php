@@ -58,17 +58,7 @@ class ResponseController extends Controller
             }
 
             // Lọc sản phẩm dựa trên câu trả lời
-            $recommendedProducts = Product::query()
-                ->when(isset($answers['Q1']), function ($query) use ($answers) {
-                    return $query->where('target_skin_type', $answers['Q1']); // Lọc theo loại da
-                })
-                ->when(isset($answers['Q2']), function ($query) use ($answers) {
-                    return $query->where('product_type', $answers['Q2']); // Lọc theo loại sản phẩm
-                })
-                ->when(isset($answers['Q6']), function ($query) use ($answers) {
-                    return $query->where('main_ingredient', $answers['Q6']); // Lọc theo thành phần chứa
-                })
-                ->get();
+
 
             return response()->json([
                 'message' => 'Response submitted successfully.',

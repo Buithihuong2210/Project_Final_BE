@@ -86,7 +86,7 @@ Route::get('/products/{product_id}/reviews', [ProductController::class, 'getRevi
 
 
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
-//Route::post('/payment/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
+//Route::posq'/payment/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 
