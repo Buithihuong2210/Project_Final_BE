@@ -298,7 +298,7 @@ class BlogController extends Controller
     public function updateAdmin(Request $request, $blog_id)
     {
         try {
-            if (!auth()->user()->admin) {
+            if (!auth()->user()->admin && auth()->user()->role !== 'staff') {
                 return response()->json([
                     'message' => 'Unauthorized. Only admins can perform this action.',
                 ], 403);
@@ -363,6 +363,8 @@ class BlogController extends Controller
             ], 500);
         }
     }
+
+
 
     // Change the blog status
     public function changeStatus(Request $request, $blog_id)

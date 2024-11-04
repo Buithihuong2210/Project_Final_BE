@@ -8,7 +8,7 @@ use App\Models\Survey;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Support\Facades\Auth;
 
 
 class ResponseController extends Controller
@@ -139,6 +139,35 @@ class ResponseController extends Controller
         }
     }
 
+    public function showResponse()
+    {
+        // Lấy user_id của người dùng đã đăng nhập
+        $userId = auth()->id();
+
+        // Kiểm tra nếu người dùng đã đăng nhập
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. Please log in.',
+            ], 401);
+        }
+
+        // Lấy tất cả các câu trả lời của người dùng này cùng với thông tin câu hỏi
+        $responses = Response::with('question:question_id,question_text,category,code') // Thay 'id' bằng 'question_id'
+        ->where('user_id', $userId)
+            ->get(['response_id', 'user_id', 'question_id', 'answer_text']); // Thay 'id' bằng 'response_id' nếu cần
+
+        // Kiểm tra nếu không có câu trả lời nào
+        if ($responses->isEmpty()) {
+            return response()->json([
+                'message' => 'No responses found for this user.',
+            ], 404);
+        }
+
+        // Trả về kết quả dưới dạng JSON
+        return response()->json($responses);
+    }
+
+
     // Update a specific response by its ID
     public function update(Request $request, $survey_id)
     {
@@ -217,3 +246,4 @@ class ResponseController extends Controller
         }
     }
 }
+
