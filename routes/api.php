@@ -201,6 +201,11 @@ Route::get('/{hashtag_id}', [HashtagController::class, 'show']); // Show a speci
     });
 });
 
+Route::prefix('surveys/{survey_id}/questions')->group(function () {
+    Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
+    Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
+});
+
 // Admin routes
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     // Admin user management routes
