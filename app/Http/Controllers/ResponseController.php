@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Response;
 use App\Models\Survey;
 use App\Models\Question;
@@ -15,47 +16,104 @@ class ResponseController extends Controller
     // Store a new response for a survey
     public function store(Request $request, $survey_id)
     {
-        // Validate that 'responses' is provided and is an array
+        // Validate rằng 'responses' đã được cung cấp và là một mảng
         $validated = $request->validate([
-            'responses' => 'required|array', // Expecting an array of response objects
+            'responses' => 'required|array',
         ]);
 
         try {
-            // Check if the survey exists (this will throw an exception if not found)
+            // Kiểm tra xem khảo sát có tồn tại không
             Survey::findOrFail($survey_id);
 
-            // Loop through the responses and create records
+            $answers = [];
+
+            // Lặp qua các phản hồi và lưu trữ
             foreach ($validated['responses'] as $response) {
-                // Find the question to get its options
-                $question = Question::findOrFail($response['question_id']); // Assuming you have a Question model
+                $question = Question::findOrFail($response['question_id']);
 
-                // Check if the answer is valid (it must be in the options)
-                if ($question->type === 'multiple_choice') {
-                    $validOptions = $question->options; // Assuming options are stored as a JSON array or similar
-                    if (!in_array($response['answer'], $validOptions)) {
-                        return response()->json(['error' => 'Invalid answer for question ' . $response['question_id']], 400);
-                    }
-                }
+                // Lưu câu trả lời vào mảng
+                $answers[$response['question_id']] = $response['answer'];
 
-                // Create the response record
+                // Tạo bản ghi phản hồi
                 Response::create([
                     'survey_id' => $survey_id,
-                    'question_id' => $response['question_id'], // Get the question ID
-                    'user_id' => auth()->id(), // Assuming you have authentication set up
-                    'answer_text' => $response['answer'], // Store the answer
+                    'question_id' => $response['question_id'],
+                    'user_id' => auth()->id(),
+                    'answer_text' => $response['answer'],
                 ]);
             }
 
-            // Return a success message with a 201 status code
-            return response()->json(['message' => 'Response submitted successfully.'], 201);
+            // Lọc sản phẩm dựa trên câu trả lời
+            $recommendedProducts = Product::query()
+                ->when(isset($answers[29]), function ($query) use ($answers) {
+                    return $query->where('target_skin_type', $answers[29]); // Lọc theo loại da
+                })
+                ->when(isset($answers[30]), function ($query) use ($answers) {
+                    return $query->where('product_type', $answers[30]); // Lọc theo loại sản phẩm
+                })
+                ->when(isset($answers[34]), function ($query) use ($answers) {
+                    return $query->where('main_ingredient', $answers[34]); // Lọc theo thành phần chính
+                })
+                ->get();
+
+            return response()->json([
+                'message' => 'Response submitted successfully.',
+                'recommended_products' => $recommendedProducts,
+            ], 201);
 
         } catch (ModelNotFoundException $e) {
-            // Return a 404 error if the survey or question is not found
             return response()->json(['error' => 'Survey or question not found.'], 404);
         } catch (\Exception $e) {
-            // Return a 500 error for any other failure
-            dd($e); // Debug detailed error message
             return response()->json(['error' => 'Failed to submit response.'], 500);
+        }
+    }
+
+// Phương thức để lấy sản phẩm khuyến nghị dựa trên phản hồi của người dùng
+    protected function getRecommendedProducts($responses)
+    {
+        // Tạo một mảng để lưu trữ các điều kiện tìm kiếm sản phẩm
+        $conditions = [];
+
+        // Định nghĩa ánh xạ giữa ID câu hỏi và thuộc tính sản phẩm
+        $questionToProductField = [
+            1 => 'target_skin_type', // ID câu hỏi loại da
+            2 => 'product_type', // ID câu hỏi ưu tiên sản phẩm
+            3 => 'main_ingredient', // ID câu hỏi thành phần chính
+            // Thêm ánh xạ cho các câu hỏi khác nếu cần
+        ];
+
+        foreach ($responses as $response) {
+            // Kiểm tra xem ID câu hỏi có trong ánh xạ không
+            if (array_key_exists($response['question_id'], $questionToProductField)) {
+                $productField = $questionToProductField[$response['question_id']];
+                $conditions[$productField] = $response['answer']; // Lưu trữ điều kiện
+            }
+        }
+
+        // Tìm kiếm các sản phẩm khuyến nghị dựa trên các điều kiện
+        $recommendedProducts = Product::where($conditions)->get();
+
+        return $recommendedProducts;
+    }
+
+
+
+    // Show a specific response by its ID
+    public function show($response_id)
+    {
+        try {
+            // Find the response by its ID
+            $response = Response::findOrFail($response_id);
+
+            // Return the response data with a 200 status code
+            return response()->json($response, 200);
+
+        } catch (ModelNotFoundException $e) {
+            // Return a 404 error if the response is not found
+            return response()->json(['error' => 'Response not found.'], 404);
+        } catch (\Exception $e) {
+            // Return a 500 error for any other failure
+            return response()->json(['error' => 'Failed to retrieve response.'], 500);
         }
     }
 
@@ -96,25 +154,6 @@ class ResponseController extends Controller
 
             // Return a 500 error if fetching responses fails
             return response()->json(['error' => 'Failed to retrieve responses.'], 500);
-        }
-    }
-
-    // Show a specific response by its ID
-    public function show($response_id)
-    {
-        try {
-            // Find the response by its ID
-            $response = Response::findOrFail($response_id);
-
-            // Return the response data with a 200 status code
-            return response()->json($response, 200);
-
-        } catch (ModelNotFoundException $e) {
-            // Return a 404 error if the response is not found
-            return response()->json(['error' => 'Response not found.'], 404);
-        } catch (\Exception $e) {
-            // Return a 500 error for any other failure
-            return response()->json(['error' => 'Failed to retrieve response.'], 500);
         }
     }
 
