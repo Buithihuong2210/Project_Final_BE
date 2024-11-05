@@ -293,5 +293,4 @@ class ResponseController extends Controller
             return response()->json(['error' => 'Failed to delete response.'], 500);
         }
     }
-}
 
