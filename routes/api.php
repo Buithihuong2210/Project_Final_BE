@@ -74,6 +74,11 @@ Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
 
+Route::prefix('brands')->group(function () {
+    Route::get('/', [BrandController::class, 'index']); // List all brands
+    Route::get('/{id}', [BrandController::class, 'show']); // Show a specific brand
+});
+
 
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
