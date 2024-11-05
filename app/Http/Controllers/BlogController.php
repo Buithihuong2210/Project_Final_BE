@@ -463,7 +463,6 @@ class BlogController extends Controller
         }
     }
 
-    // List all blogs with status 'draft'
 // List all blogs with status 'draft'
     public function listDraftBlogs()
     {
