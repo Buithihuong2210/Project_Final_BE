@@ -85,6 +85,17 @@ Route::prefix('brands')->group(function () {
     Route::get('/{id}', [BrandController::class, 'show']); // Show a specific brand
 });
 
+Route::prefix('shippings')->group(function () {
+    Route::get('/', [ShippingController::class, 'index']); // List all shipping records
+    Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
+});
+
+Route::prefix('vouchers')->group(function () {
+    Route::get('/', [VoucherController::class, 'index']); // List all vouchers
+    Route::get('/{voucher_id}', [VoucherController::class, 'show']); // Show a specific voucher
+});
+
+
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
@@ -120,11 +131,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{item}', [CartController::class, 'destroy']); // Delete specific cart item
         Route::post('/complete', [CartController::class, 'completeCart']);
 
-    });
-
-    Route::prefix('shippings')->group(function () {
-        Route::get('/', [ShippingController::class, 'index']); // List all shipping records
-        Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
     });
 
 // Order routes

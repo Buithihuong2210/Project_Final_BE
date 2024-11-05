@@ -110,28 +110,28 @@ class CartController extends Controller
         }
     }
 
-    public function completeCart()
-    {
-        try {
-            // Find the active shopping cart for the authenticated user
-            $cart = ShoppingCart::where('user_id', auth()->id())
-                ->where('status', 'active')
-                ->first();
+        public function completeCart()
+        {
+            try {
+                // Find the active shopping cart for the authenticated user
+                $cart = ShoppingCart::where('user_id', auth()->id())
+                    ->where('status', 'active')
+                    ->first();
 
-            // Check if the cart exists
-            if (!$cart) {
-                return response()->json(['message' => 'No active cart found.'], 404);
+                // Check if the cart exists
+                if (!$cart) {
+                    return response()->json(['message' => 'No active cart found.'], 404);
+                }
+
+                // Update the cart status to completed after successful payment
+                $cart->status = 'completed';
+                $cart->save();
+
+                return response()->json(['message' => 'Cart marked as completed successfully.'], 200);
+            } catch (Exception $e) {
+                return response()->json(['error' => 'Error completing cart: ' . $e->getMessage()], 500);
             }
-
-            // Update the cart status to completed after successful payment
-            $cart->status = 'completed';
-            $cart->save();
-
-            return response()->json(['message' => 'Cart marked as completed successfully.'], 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => 'Error completing cart: ' . $e->getMessage()], 500);
         }
-    }
 
     /**
      * Show a specific cart item for the authenticated user.
