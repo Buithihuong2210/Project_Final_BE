@@ -17,17 +17,9 @@ class VoucherController extends Controller
     public function index()
     {
         try {
-            // Kiểm tra và cập nhật trạng thái cho các voucher đã hết hạn
-            $this->checkVoucherExpiry();
 
             // Lấy tất cả các voucher và cập nhật trạng thái của chúng
             $vouchers = Voucher::all();
-
-            // Cập nhật trạng thái cho mỗi voucher
-            $currentDate = Carbon::now();
-            foreach ($vouchers as $voucher) {
-                $voucher->status = ($voucher->expiry_date >= $currentDate) ? 'active' : 'inactive';
-            }
 
             return response()->json($vouchers, 200); // Trả về danh sách voucher dưới dạng JSON
         } catch (Exception $e) {
@@ -85,10 +77,6 @@ class VoucherController extends Controller
     {
         try {
             $voucher = Voucher::findOrFail($voucher_id); // Tìm voucher theo ID hoặc thất bại
-
-            // Kiểm tra expiry_date để xác định trạng thái
-            $currentDate = Carbon::now();
-            $voucher->status = ($voucher->expiry_date >= $currentDate) ? 'active' : 'inactive';
 
             return response()->json($voucher, 200); // Trả về thông tin voucher dưới dạng JSON
         } catch (Exception $e) {
