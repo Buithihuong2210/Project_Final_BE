@@ -168,6 +168,54 @@ class ResponseController extends Controller
     }
 
 
+    public function recommendItem()
+    {
+        // Lấy user_id của người dùng đã đăng nhập
+        $userId = auth()->id();
+
+        // Kiểm tra nếu người dùng chưa đăng nhập
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. Please log in.',
+            ], 401);
+        }
+
+        // Lấy tất cả các câu trả lời của người dùng này
+        $responses = Response::with('question')
+            ->where('user_id', $userId)
+            ->get();
+
+        // Kiểm tra nếu không có câu trả lời nào
+        if ($responses->isEmpty()) {
+            return response()->json([
+                'message' => 'No responses found for this user.',
+            ], 404);
+        }
+
+        // Lưu câu trả lời vào mảng để dễ dàng truy xuất
+        $answers = [];
+        foreach ($responses as $response) {
+            $answers[$response->question->code] = $response->answer_text;
+        }
+
+        // Lọc sản phẩm dựa trên câu trả lời của người dùng
+        $recommendedProducts = Product::query()
+            ->when(isset($answers['Q1']), function ($query) use ($answers) {
+                return $query->where('target_skin_type', $answers['Q1']); // Lọc theo loại da
+            })
+            ->when(isset($answers['Q2']), function ($query) use ($answers) {
+                return $query->where('product_type', $answers['Q2']); // Lọc theo loại sản phẩm
+            })
+            ->when(isset($answers['Q6']), function ($query) use ($answers) {
+                return $query->where('main_ingredient', $answers['Q6']); // Lọc theo thành phần chính
+            })
+            ->get();
+
+        // Trả về danh sách sản phẩm được đề xuất
+        return response()->json($recommendedProducts, 200);
+    }
+
+
     // Update a specific response by its ID
     public function update(Request $request, $survey_id)
     {

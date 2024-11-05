@@ -22,13 +22,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\VNPayController;
-use App\Http\Controllers\DeliveryController;
-use App\Http\Controllers\ProductSuggestionController;
-
-
-
-
-
 
 
 /*
@@ -68,21 +61,8 @@ Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
 Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
 
 
-Route::prefix('deliveries')->group(function () {
-    // Route to create a new delivery
-    Route::post('/', [DeliveryController::class, 'create']);
-    // Route to update the status of a delivery
-    Route::put('/{id}', [DeliveryController::class, 'updateStatus']);
-});
-
-Route::post('/suggest-products', [ProductSuggestionController::class, 'suggestProducts']);
-
 Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
 Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
-
-
-
-
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
@@ -96,6 +76,8 @@ Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs'])
 Route::prefix('responses')->group(function () {
     Route::get('/', [ResponseController::class, 'index']);
     Route::get('/my', [ResponseController::class, 'showResponse']);
+    Route::get('/recommend', [ResponseController::class, 'recommendItem']); // Thêm route cho hàm recommendItem
+
 });
 
 Route::prefix('users')->group(function () {
@@ -135,6 +117,7 @@ Route::prefix('surveys')->group(function () {
 
     Route::prefix('responses')->group(function () {
         Route::get('/my', [ResponseController::class, 'showResponse']);
+        Route::get('/recommend', [ResponseController::class, 'recommendItem']); // Thêm route cho hàm recommendItem
     });
 
 
