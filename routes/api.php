@@ -182,10 +182,10 @@ Route::prefix('surveys/{survey_id}/questions')->group(function () {
     Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
 });
 
+// Routes cho admin và staff
+Route::middleware(['auth:sanctum'])->prefix('manager')->group(function () {
 // Admin routes
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    // Admin user management routes
-    Route::get('users', [UserController::class, 'index']);
+    Route::get('/users', [UserController::class, 'index']);
     Route::put('/user/update/{id}', [UserController::class, 'update']);
     Route::delete('/user/{id}', [UserController::class, 'destroy']);
     Route::put('/user/{userId}/role', [UserController::class, 'updateRole']);
@@ -278,44 +278,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
         Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
     });
-
-});
-
-// Staff route
-Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(function () {
-        Route::prefix('blogs')->group(function () {
-        Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
-        Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
-        Route::get('/{blog}', [BlogController::class, 'show']);
-        Route::delete('/{blog}', [BlogController::class, 'destroy']);
-        Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
-        Route::put('/{blog_id}/likes', [BlogController::class, 'setLikes']);
-    });
-
-    Route::prefix('surveys')->group(function () {
-        Route::post('/', [SurveyController::class, 'store']); // Create a new survey
-        Route::get('/', [SurveyController::class, 'index']); // List all surveys
-        Route::get('/{survey_id}', [SurveyController::class, 'show']); // Show a specific survey
-        Route::put('/{survey_id}', [SurveyController::class, 'update']); // Update a specific survey
-        Route::delete('/{survey_id}', [SurveyController::class, 'destroy']); // Delete a specific survey
-    });
-
-    // Question management routes
-    Route::prefix('surveys/{survey_id}/questions')->group(function () {
-        Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
-        Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
-        Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
-        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
-        Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
-    });
-
-    Route::prefix('responses')->group(function () {
-        Route::get('/', [ResponseController::class, 'index']);
-    });
-
-    //Staff có quyền xác nhận các đơn hàng được giao, đặc biệt là khi kiểm tra phương thức thanh toán và cập nhật trạng thái.
-    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
-    Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
 
 });
 
