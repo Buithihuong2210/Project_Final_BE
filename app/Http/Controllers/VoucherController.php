@@ -17,6 +17,8 @@ class VoucherController extends Controller
     public function index()
     {
         try {
+            // Kiểm tra và cập nhật trạng thái cho các voucher đã hết hạn
+            $this->checkVoucherExpiry();
 
             // Lấy tất cả các voucher và cập nhật trạng thái của chúng
             $vouchers = Voucher::all();
