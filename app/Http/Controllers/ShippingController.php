@@ -43,6 +43,8 @@ class ShippingController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|unique:shippings,name', // Ensure name is unique
                 'shipping_amount' => 'required|numeric',
+                'method' => 'required|string', // Kiểm tra trường method
+
             ]);
 
             if ($validator->fails()) {
@@ -68,6 +70,7 @@ class ShippingController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|unique:shippings,name,' . $shipping->id, // Ensure name is unique except for current record
                 'shipping_amount' => 'required|numeric',
+                'method' => 'required|string', // Kiểm tra trường method
             ]);
 
             if ($validator->fails()) {
