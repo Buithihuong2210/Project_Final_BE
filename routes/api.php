@@ -2,26 +2,28 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\SocialController;
-use App\Http\Controllers\BrandController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\SocialAuthController;
-use App\Http\Controllers\ImageController;
-use App\Http\Controllers\PasswordResetController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\BlogController;
-use App\Http\Controllers\HashtagController;
-use App\Http\Controllers\CommentController;
-use App\Http\Controllers\SurveyController;
-use App\Http\Controllers\QuestionController;
-use App\Http\Controllers\ResponseController;
-use App\Http\Controllers\ShippingController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\VoucherController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\VNPayController;
+use App\Http\Controllers\{
+    AuthController,
+    UserController,
+    SocialController,
+    BrandController,
+    ProductController,
+    SocialAuthController,
+    ImageController,
+    PasswordResetController,
+    CartController,
+    BlogController,
+    HashtagController,
+    CommentController,
+    SurveyController,
+    QuestionController,
+    ResponseController,
+    ShippingController,
+    OrderController,
+    VoucherController,
+    ReviewController,
+    VNPayController
+};
 
 
 /*
@@ -73,27 +75,6 @@ Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
 
 
-Route::prefix('responses')->group(function () {
-    Route::get('/', [ResponseController::class, 'index']);
-    Route::get('/my', [ResponseController::class, 'showResponse']);
-    Route::get('/recommend', [ResponseController::class, 'recommendItem']); // Thêm route cho hàm recommendItem
-
-});
-
-Route::prefix('users')->group(function () {
-    Route::get('/{id}', [UserController::class, 'getUserById']);
-});
-
-Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
-Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
-Route::get('/orders/total-payments', [OrderController::class, 'getTotalPaymentsForBothMethods']);
-Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
-
-
-
-
-
-
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
@@ -105,14 +86,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/change-password', [UserController::class, 'changePassword']);
 
     // Survey routes for users
-Route::prefix('surveys')->group(function () {
-        Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
-    Route::put('/{survey_id}/responses', [ResponseController::class, 'update']); // Cập nhật tất cả phản hồi cho khảo sát
-});
-
-
-    Route::prefix('payment')->group(function () {
-        Route::post('/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
+    Route::prefix('surveys')->group(function () {
+            Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
+        Route::put('/{survey_id}/responses', [ResponseController::class, 'update']); // Cập nhật tất cả phản hồi cho khảo sát
     });
 
     Route::prefix('responses')->group(function () {
@@ -120,6 +96,9 @@ Route::prefix('surveys')->group(function () {
         Route::get('/recommend', [ResponseController::class, 'recommendItem']); // Thêm route cho hàm recommendItem
     });
 
+    Route::prefix('payment')->group(function () {
+        Route::post('/vnpay/create/{order_id}', [VNPayController::class, 'createPayment']);
+    });
 
 
     // User routes for Cart, Products, Blogs, etc.
@@ -142,7 +121,6 @@ Route::prefix('surveys')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);  // Create a new order
         Route::get('/' ,[OrderController::class, 'showAll']);
-
     });
 
     Route::prefix('products')->group(function () {
@@ -195,7 +173,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/user/update/{id}', [UserController::class, 'update']);
     Route::delete('/user/{id}', [UserController::class, 'destroy']);
     Route::put('/user/{userId}/role', [UserController::class, 'updateRole']);
-
+    Route::get('/users/{id}', [UserController::class, 'getUserById']);
 
     // Admin routes for managing brands and products
     Route::prefix('brands')->group(function () {
@@ -223,8 +201,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::put('/{hashtag_id}', [HashtagController::class, 'update']); // Update a specific hashtag
         Route::delete('/{hashtag_id}', [HashtagController::class, 'destroy']); // Delete a specific hashtag
         Route::get('/by-id/{hashtag_id}', [HashtagController::class, 'getByID']); // Get hashtag by ID
-
     });
+
+    Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
+    Route::get('/orders/total-payments', [OrderController::class, 'getTotalPaymentsForBothMethods']);
+    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+    Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
+
+
 
     Route::prefix('blogs')->group(function () {
         Route::post('/', [BlogController::class, 'store']);
@@ -237,7 +221,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     });
 
     Route::prefix('shippings')->group(function () {
-Route::get('/', [ShippingController::class, 'index']); // List all shipping records
+    Route::get('/', [ShippingController::class, 'index']); // List all shipping records
         Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
         Route::post('/', [ShippingController::class, 'store']); // Create a new shipping record
         Route::put('/{shipping_id}', [ShippingController::class, 'update']); // Update a shipping record
@@ -281,8 +265,8 @@ Route::get('/', [ShippingController::class, 'index']); // List all shipping reco
 
 });
 
+// Staff route
 Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(function () {
-
         Route::prefix('blogs')->group(function () {
         Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
         Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
@@ -312,6 +296,10 @@ Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(functi
     Route::prefix('responses')->group(function () {
         Route::get('/', [ResponseController::class, 'index']);
     });
+
+    //Staff có quyền xác nhận các đơn hàng được giao, đặc biệt là khi kiểm tra phương thức thanh toán và cập nhật trạng thái.
+    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+    Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
 
 });
 
