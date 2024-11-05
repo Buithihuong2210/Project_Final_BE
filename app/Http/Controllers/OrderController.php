@@ -235,7 +235,6 @@ class OrderController extends Controller
             }
         }
 
-
         // Lưu trạng thái đơn hàng nếu có sự thay đổi
         if ($order->isDirty('status')) {
             $order->save();
