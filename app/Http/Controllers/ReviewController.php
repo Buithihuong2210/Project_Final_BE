@@ -69,6 +69,7 @@ class ReviewController extends Controller
             return response()->json(['message' => 'You have already reviewed this order.'], 403);
         }
 
+
         // Lưu đánh giá cho từng sản phẩm
         foreach ($request->product_reviews as $index => $reviewData) {
             // Tìm sản phẩm tương ứng từ order_items dựa trên thứ tự
