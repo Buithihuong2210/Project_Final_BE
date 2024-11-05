@@ -130,19 +130,27 @@ class VoucherController extends Controller
     public function changeStatus(Request $request, $voucher_id)
     {
         try {
+            // Validate that the status is either 'active' or 'inactive'
+            $request->validate([
+                'status' => 'required|in:active,inactive',
+            ]);
+
+            // Find the voucher by ID
             $voucher = Voucher::findOrFail($voucher_id);
 
-            // Kiểm tra expiry_date để xác định trạng thái
-            $currentDate = Carbon::now();
-            $status = ($voucher->expiry_date >= $currentDate) ? 'active' : 'inactive';
-
-            // Cập nhật trạng thái
-            $voucher->status = $status;
+            // Update the status as provided in the request
+            $voucher->status = $request->input('status');
             $voucher->save();
 
-            return response()->json(['message' => 'Trạng thái voucher đã được cập nhật thành công', 'voucher' => $voucher], 200);
+            return response()->json([
+                'message' => 'Trạng thái voucher đã được cập nhật thành công',
+                'voucher' => $voucher,
+            ], 200);
+
         } catch (Exception $e) {
-            return response()->json(['error' => 'Không thể thay đổi trạng thái voucher'], 500);
+            return response()->json([
+                'error' => 'Không thể thay đổi trạng thái voucher',
+            ], 500);
         }
     }
 

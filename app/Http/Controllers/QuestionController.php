@@ -16,7 +16,7 @@ class QuestionController extends Controller
             // Validate the incoming request
             $validator = Validator::make($request->all(), [
                 'question_text' => 'required|string|max:255',
-                'type' => 'required|string|in:multiple_choice,text',
+                'question_type' => 'required|string|in:multiple_choice,text',
                 'options' => 'required_if:type,multiple_choice|array|min:2',
                 'options.*' => 'required_if:type,multiple_choice|string',
                 'category' => 'required|string|in:Interest,Goal,Factor',
@@ -34,8 +34,8 @@ class QuestionController extends Controller
             // Create the question
             $question = $survey->questions()->create([
                 'question_text' => $request->input('question_text'),
-                'type' => $request->input('type'),
-                'options' => $request->input('type') === 'multiple_choice' ? $request->input('options') : null,
+                'question_type' => $request->input('question_type'),
+                'options' => $request->input('question_type') === 'multiple_choice' ? $request->input('options') : null,
                 'category' => $request->input('category'),
                 'code' => $request->input('code'), // Thêm code
 
@@ -47,10 +47,9 @@ class QuestionController extends Controller
                 "survey_id" => $survey->survey_id,
                 "question_text" => $question->question_text,
                 "category" => $question->category,
-                "type" => $question->type,
+                "question_type" => $question->question_type,
                 "options" => $question->options,
                 "code" => $question->code, // Thêm code vào response
-                "question_type" => $question->type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
             ];
@@ -79,10 +78,9 @@ class QuestionController extends Controller
                     "survey_id" => $question->survey_id,
                     "question_text" => $question->question_text,
                     "category" => $question->category,
-                    "type" => $question->type,
                     "options" => $question->options,
                     "code" => $question->code, // Thêm code vào response
-                    "question_type" => $question->type,
+                    "question_type" => $question->question_type,
                     "created_at" => $question->created_at->toIso8601String(),
                     "updated_at" => $question->updated_at->toIso8601String(),
                 ];
@@ -112,10 +110,9 @@ class QuestionController extends Controller
                 "survey_id" => $question->survey_id,
                 "question_text" => $question->question_text,
                 "category" => $question->category,
-                "type" => $question->type,
                 "options" => $question->options,
                 "code" => $question->code, // Thêm code vào response
-                "question_type" => $question->type,
+                "question_type" => $question->question_type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
             ];
@@ -137,7 +134,7 @@ class QuestionController extends Controller
             // Validate the incoming request
             $validator = Validator::make($request->all(), [
                 'question_text' => 'sometimes|required|string|max:255',
-                'type' => 'sometimes|required|string|in:multiple_choice,text',
+                'question_type' => 'sometimes|required|string|in:multiple_choice,text',
                 'options' => 'sometimes|required_if:type,multiple_choice|array|min:2',
                 'options.*' => 'required_if:type,multiple_choice|string',
                 'category' => 'sometimes|required|string|in:Interest,Goal,Factor',
@@ -156,8 +153,8 @@ class QuestionController extends Controller
             // Update the question
             $question->update([
                 'question_text' => $request->input('question_text', $question->question_text),
-                'type' => $request->input('type', $question->type),
-                'options' => $request->input('type') === 'multiple_choice' ? $request->input('options', $question->options) : null,
+                'question_type' => $request->input('question_type', $question->question_type),
+                'options' => $request->input('question_type') === 'multiple_choice' ? $request->input('options', $question->options) : null,
                 'category' => $request->input('category', $question->category),
                 'code' => $request->input('code', $question->code),
             ]);
@@ -168,10 +165,9 @@ class QuestionController extends Controller
                 "survey_id" => $question->survey_id,
                 "question_text" => $question->question_text,
                 "category" => $question->category,
-                "type" => $question->type,
                 "options" => $question->options,
                 "code" => $question->code,
-                "question_type" => $question->type,
+                "question_type" => $question->question_type,
                 "created_at" => $question->created_at->toIso8601String(),
                 "updated_at" => $question->updated_at->toIso8601String(),
             ];

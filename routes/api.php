@@ -252,7 +252,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::put('/{voucher_id}', [VoucherController::class, 'update']); // Update a specific voucher
         Route::delete('/{voucher_id}', [VoucherController::class, 'destroy']); // Delete a specific voucher
         // Route to change voucher status
-        Route::post('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
+        Route::put('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
     });
 
     Route::prefix('surveys')->group(function () {
