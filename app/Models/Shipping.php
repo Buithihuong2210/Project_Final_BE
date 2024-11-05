@@ -13,5 +13,6 @@ class Shipping extends Model
     protected $fillable = [
         'name',
         'shipping_amount',
+        'method'
     ];
 }
