@@ -167,7 +167,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('hashtags')->group(function () {
         Route::get('/', [HashtagController::class, 'index']); // List all hashtags
-Route::get('/{hashtag_id}', [HashtagController::class, 'show']); // Show a specific hashtag
+    Route::get('/{hashtag_id}', [HashtagController::class, 'show']); // Show a specific hashtag
         Route::get('/by-id/{hashtag_id}', [HashtagController::class, 'getByID']); // Get hashtag by ID
     });
 });
@@ -177,14 +177,14 @@ Route::prefix('surveys/{survey_id}/questions')->group(function () {
     Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
 });
 
-// Routes cho admin và staff
-Route::middleware(['auth:sanctum'])->prefix('manager')->group(function () {
-// Admin routes
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('manager')->group(function () {
+    // Admin routes for user management
     Route::get('/users', [UserController::class, 'index']);
     Route::put('/user/update/{id}', [UserController::class, 'update']);
     Route::delete('/user/{id}', [UserController::class, 'destroy']);
     Route::put('/user/{userId}/role', [UserController::class, 'updateRole']);
     Route::get('/users/{id}', [UserController::class, 'getUserById']);
+
 
     // Admin routes for managing brands and products
     Route::prefix('brands')->group(function () {
@@ -216,23 +216,16 @@ Route::middleware(['auth:sanctum'])->prefix('manager')->group(function () {
 
     Route::put('/update-status/{order_id}' ,[OrderController::class, 'updateOrderStatus']);
     Route::get('/orders/total-payments', [OrderController::class, 'getTotalPaymentsForBothMethods']);
-    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
     Route::get('/orders/canceled', [OrderController::class, 'getCanceledOrders']);
 
-
-
     Route::prefix('blogs')->group(function () {
-        Route::post('/', [BlogController::class, 'store']);
-        Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
-        Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
-        Route::get('/{blog}', [BlogController::class, 'show']);
         Route::delete('/{blog}', [BlogController::class, 'destroy']);
         Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
         Route::put('/{blog_id}/likes', [BlogController::class, 'setLikes']); // Đường dẫn để cập nhật số lượt like
     });
 
     Route::prefix('shippings')->group(function () {
-    Route::get('/', [ShippingController::class, 'index']); // List all shipping records
+        Route::get('/', [ShippingController::class, 'index']); // List all shipping records
         Route::get('/{shipping_id}', [ShippingController::class, 'show']); // Get a specific shipping record
         Route::post('/', [ShippingController::class, 'store']); // Create a new shipping record
         Route::put('/{shipping_id}', [ShippingController::class, 'update']); // Update a shipping record
@@ -250,6 +243,11 @@ Route::middleware(['auth:sanctum'])->prefix('manager')->group(function () {
         Route::put('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
     });
 
+
+});
+
+// Routes cho admin và staff
+Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->group(function () {
     Route::prefix('surveys')->group(function () {
         Route::post('/', [SurveyController::class, 'store']); // Create a new survey
         Route::get('/', [SurveyController::class, 'index']); // List all surveys
@@ -272,6 +270,13 @@ Route::middleware(['auth:sanctum'])->prefix('manager')->group(function () {
         Route::get('/', [ResponseController::class, 'index']); // List all responses
         Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
         Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
+    });
+
+    Route::prefix('blogs')->group(function () {
+        Route::post('/', [BlogController::class, 'store']);
+        Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
+        Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
+        Route::get('/{blog}', [BlogController::class, 'show']);
     });
 
 });
