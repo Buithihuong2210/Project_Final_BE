@@ -15,20 +15,31 @@ class SocialController extends Controller
 
     public function handleGoogleCallback()
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-        // Find or create the user in your database
-        $user = User::firstOrCreate(
-            ['email' => $googleUser->getEmail()],
-            ['name' => $googleUser->getName(), 'google_id' => $googleUser->getId(),'password'=>'12345678'],
-        );
+            // Find or create the user in your database
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->getEmail()],
+                [
+                    'name' => $googleUser->getName(),
+                    'google_id' => $googleUser->getId(),
+                    'password' => bcrypt('12345678'),
+                ]
+            );
 
-        // Log the user in
-        Auth::login($user);
+            // Log the user in
+            Auth::login($user);
 
-        // Return a response, such as a JSON token
-        $tk =  $user->createToken('authToken')->plainTextToken;
+            // Return a response, such as a JSON token
+            $tk = $user->createToken('authToken')->plainTextToken;
 
-        return response()->redirectTo('http://localhost:5173/home?tk='.$tk);
+            return response()->redirectTo('http://localhost:5173/home?tk=' . $tk);
+
+        } catch (\Exception $e) {
+            // Xử lý nếu gặp lỗi và chuyển hướng đến trang đăng nhập
+            return redirect('/login')->with('error', 'Lỗi đăng nhập Google');
+        }
     }
+
 }
