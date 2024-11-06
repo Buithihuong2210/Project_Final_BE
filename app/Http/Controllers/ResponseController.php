@@ -294,5 +294,3 @@ class ResponseController extends Controller
         }
     }
 }
-
-}
