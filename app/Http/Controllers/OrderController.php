@@ -31,11 +31,18 @@ class OrderController extends Controller
             // Lấy user_id từ thông tin người dùng đã xác thực
             $userId = auth()->id();
 
-            // Tìm giỏ hàng của người dùng
-            $cart = ShoppingCart::with('items.product')->where('user_id', $userId)->first();
+            // Lấy giỏ hàng của người dùng
+            $cart = ShoppingCart::with('items.product')
+                ->where('user_id', $userId)
+                ->where('status', 'active') // Đảm bảo giỏ hàng đang hoạt động
+                ->first();
 
             if (!$cart) {
-                return response()->json(['error' => 'Cart not found.'], 404);
+                return response()->json(['error' => 'Không tìm thấy giỏ hàng hoặc giỏ hàng trống.'], 404);
+            }
+
+            if ($cart->items->isEmpty()) {
+                return response()->json(['error' => 'Giỏ hàng trống.'], 400);
             }
 
             // Lấy tổng giá trị giỏ hàng

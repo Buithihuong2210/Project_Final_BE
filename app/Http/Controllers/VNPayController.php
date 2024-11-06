@@ -119,6 +119,7 @@ class VNPayController extends Controller
                 'updated_at' => now(), // Cập nhật thời gian
             ]);
 
+
             // Ghi lại giao dịch vào bảng payments
             DB::table('payments')->insert([
                 'order_id' => $orderId, // The order ID
@@ -132,7 +133,14 @@ class VNPayController extends Controller
                 'updated_at' => now(), // Thêm updated_at
             ]);
 
-            return response()->json(['message' => 'Payment successful. Order updated.'], 200);
+            // Tạo đường dẫn chi tiết đơn hàng cho frontend
+            $orderUrl = url("/order/{$orderId}"); // Trang chi tiết đơn hàng
+
+            return response()->json([
+                'message' => 'Payment successful. Order updated.',
+                'order_url' => $orderUrl, // Đường dẫn chi tiết đơn hàng
+            ], 200);
+
         } else {
             // Nếu thanh toán thất bại, cập nhật trạng thái đơn hàng
             DB::table('orders')->where('order_id', $orderId)->update([
