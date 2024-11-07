@@ -14,7 +14,6 @@ use Carbon\Carbon;
 use App\Models\ShoppingCart;
 use App\Models\OrderItem;
 
-
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -163,47 +162,45 @@ class OrderController extends Controller
     }
 
     public function showAll()
-{
-    try {
-        // Fetch all orders with related cart items and products
-        $orders = Order::with('cart.items.product')->get();
+    {
+        try {
+            // Fetch all orders with related cart items and products
+            $orders = Order::with('cart.items.product')->get();
 
-        // Return only relevant fields in the JSON response
-        return response()->json($orders->map(function ($order) {
-            return [
-                'order_id' => $order->order_id,
-                'user_id' => $order->user_id,
-                'shipping_address' => $order->shipping_address,
-                'shipping_id' => $order->shipping_id,
-                'voucher_id' => $order->voucher_id,
-                'shipping_name' => $order->shipping_name,
-                'subtotal_of_cart' => number_format($order->subtotal_of_cart, 2),
-                'shipping_cost' => number_format($order->shipping_cost, 2),
-                'total_amount' => number_format($order->total_amount, 2),
-                'payment_method' => $order->payment_method,
-                'payment_status' => $order->payment_status,
-                'status' => $order->status,
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
-                // Ensure cart and items exist before mapping them
-                'cart_items' => $order->cart ? $order->cart->items->map(function ($item) {
-                    return [
-                        'product_id' => $item->product->product_id ?? null, // Ensure product_id is fetched
-                        'name' => $item->product->name ?? 'N/A',           // Default to 'N/A' if name is not available
-                        'price' => number_format($item->product->discounted_price, 2),
-                        'price_of_cart_item' => number_format($item->price, 2),
-                        'quantity' => $item->quantity,                       // Get quantity
-                    ];
-                }) : [], // Return empty array if there is no cart or items
-            ];
-        }));
-    } catch (QueryException $e) {
-        return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
-    } catch (Exception $e) {
-        return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
+            // Return only relevant fields in the JSON response
+            return response()->json($orders->map(function ($order) {
+                return [
+                    'order_id' => $order->order_id,
+                    'user_id' => $order->user_id,
+                    'shipping_address' => $order->shipping_address,
+                    'shipping_id' => $order->shipping_id,
+                    'voucher_id' => $order->voucher_id,
+                    'shipping_name' => $order->shipping_name,
+                    'subtotal_of_cart' => number_format($order->subtotal_of_cart, 2),
+                    'shipping_cost' => number_format($order->shipping_cost, 2),
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
+                    'status' => $order->status,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'cart_items' => $order->cart->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product->product_id ?? null, // Ensure product_id is fetched
+                            'name' => $item->product->name ?? 'N/A',
+                            'price' => number_format($item->product->discounted_price, 2),
+                            'price_of_cart_item' => number_format($item->price, 2),
+                            'quantity' => $item->quantity,             // Get quantity
+                        ];
+                    }),
+                ];
+            }));
+        } catch (QueryException $e) {
+            return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
+        }
     }
-}
-
 
     public function updateOrderStatus(Request $request, $order_id)
     {
@@ -415,7 +412,6 @@ class OrderController extends Controller
 
         return response()->json($orderItems);
     }
-
     public function checkVnPayPaymentStatus($order_id)
     {
         // Giả định bạn gọi API VNPay để kiểm tra trạng thái thanh toán
@@ -430,4 +426,41 @@ class OrderController extends Controller
         return $status;
     }
 
+    public function viewAllOrdersByUserId($userId)
+    {
+        try {
+            // Lấy tất cả đơn hàng của người dùng theo user_id
+            $orders = Order::with('cart.items.product')
+                ->where('user_id', $userId)
+                ->get();
+
+            // Kiểm tra nếu không có đơn hàng nào
+            if ($orders->isEmpty()) {
+                return response()->json(['message' => 'No orders found for this user'], 404);
+            }
+
+            // Trả về thông tin đơn hàng
+            return response()->json($orders->map(function ($order) {
+                return [
+                    'order_id' => $order->order_id,
+                    'order_date' => Carbon::parse($order->order_date)->format('Y-m-d'), // Chuyển đổi đúng cách
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'shipping_address' => $order->shipping_address,
+                    'cart_items' => $order->cart->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product->product_id ?? null,
+                            'product_name' => $item->product->name ?? 'N/A',
+                            'quantity' => $item->quantity,
+                            'price' => number_format($item->product->discounted_price, 2),
+                        ];
+                    }),
+                ];
+            }));
+
+        } catch (QueryException $e) {
+            return response()->json(['error' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()], 500);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
+        }
+    }
 }

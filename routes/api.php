@@ -67,8 +67,11 @@ Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']
 Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
+
+
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 
+Route::get('/orders/user/{userId}', [OrderController::class, 'viewAllOrdersByUserId']);
 
 
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
