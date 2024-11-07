@@ -77,6 +77,11 @@ Route::get('/orders/user/{userId}', [OrderController::class, 'viewAllOrdersByUse
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
 Route::get('/blogs/published', [BlogController::class, 'showAllPublishedBlogs']);
 
+Route::prefix('brands')->group(function () {
+    Route::get('/', [BrandController::class, 'index']); // List all brands
+    Route::get('/{id}', [BrandController::class, 'show']); // Show a specific brand
+});
+
 
 Route::prefix('brands')->group(function () {
     Route::get('/', [BrandController::class, 'index']); // List all brands
@@ -283,4 +288,3 @@ Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->grou
     });
 
 });
-

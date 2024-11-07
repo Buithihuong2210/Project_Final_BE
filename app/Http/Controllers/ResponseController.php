@@ -139,7 +139,7 @@ class ResponseController extends Controller
         }
     }
 
-    public function showResponse()
+        public function showResponse()
     {
         // Lấy user_id của người dùng đã đăng nhập
         $userId = auth()->id();
@@ -294,4 +294,3 @@ class ResponseController extends Controller
         }
     }
 }
-
