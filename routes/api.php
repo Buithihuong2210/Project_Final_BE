@@ -67,6 +67,9 @@ Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']
 Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
 Route::get('/payments', [VNPayController::class, 'getAllPayments']);
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
+//Route::get('/payment/vnpay/return/{order_id}', [VNPayController::class, 'handlePaymentReturn']);
+//Route::get('/payment/vnpay/return/{vnp_TxnRef}', [VNPayController::class, 'handlePaymentReturn']);
+
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 
 
