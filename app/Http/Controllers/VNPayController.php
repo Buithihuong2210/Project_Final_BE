@@ -97,12 +97,6 @@ class VNPayController extends Controller
     public function handlePaymentReturn(Request $request)
     {
 
-        // Lấy tất cả tham số từ URL callback
-        $queryParams = $request->query();
-
-        // Tạo lại URL hoàn chỉnh với tất cả query parameters
-        $url = url('/api/payment/vnpay/return') . '?' . http_build_query($queryParams);
-
         // Lấy các tham số từ request
         $transactionNo = $request->input('vnp_TransactionNo');
         $orderId = $request->input('vnp_TxnRef'); // ID đơn hàng
@@ -139,14 +133,12 @@ class VNPayController extends Controller
                 'updated_at' => now(), // Thêm updated_at
             ]);
 
-
             // Tạo đường dẫn chi tiết đơn hàng cho frontend
             $orderUrl = url("/order/{$orderId}"); // Trang chi tiết đơn hàng
 
             return response()->json([
                 'message' => 'Payment successful. Order updated.',
                 'order_url' => $orderUrl, // Đường dẫn chi tiết đơn hàng
-                'url' => $url, // Đường dẫn API với các tham số query
             ], 200);
 
         } else {
