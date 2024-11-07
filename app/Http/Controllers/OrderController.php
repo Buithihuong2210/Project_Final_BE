@@ -174,6 +174,7 @@ class OrderController extends Controller
                     
                     'order_id' => $order->order_id,
                     'user_id' => $order->user_id,
+                    'user_name' => $order->user ? $order->user->name : 'N/A',
                     'shipping_address' => $order->shipping_address,
                     'shipping_id' => $order->shipping_id,
                     'voucher_id' => $order->voucher_id,
