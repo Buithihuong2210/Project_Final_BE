@@ -454,6 +454,7 @@ class OrderController extends Controller
                             'product_name' => $item->product->name ?? 'N/A',
                             'quantity' => $item->quantity,
                             'price' => number_format($item->product->discounted_price, 2),
+                            'image' => $item->product->image ?? 'No image available',
                         ];
                     }),
                 ];
@@ -463,6 +464,45 @@ class OrderController extends Controller
             return response()->json(['error' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()], 500);
         } catch (Exception $e) {
             return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
+        }
+        
+    }
+}
+
+     public function getOrderById($orderId)
+    {
+        try {
+            // Lấy đơn hàng theo order_id (nếu không tìm thấy sẽ trả về lỗi 404)
+            $order = Order::with('cart.items.product') // Tải các sản phẩm trong giỏ hàng
+            ->where('order_id', $orderId)
+                ->firstOrFail(); // Trả về lỗi 404 nếu không tìm thấy đơn hàng
+
+            // Trả về thông tin đơn hàng cùng với các sản phẩm trong giỏ hàng
+            return response()->json([
+                'order_id' => $order->order_id,
+                'order_date' => Carbon::parse($order->order_date)->format('Y-m-d'),
+                'total_amount' => number_format($order->total_amount, 2),
+                'shipping_address' => $order->shipping_address,
+                'status' => $order->status,
+                'cart_items' => $order->cart->items->map(function ($item) {
+                    return [
+                        'product_id' => $item->product->product_id ?? null,
+                        'product_name' => $item->product->name ?? 'N/A',
+                        'quantity' => $item->quantity,
+                        'price' => number_format($item->product->discounted_price, 2),
+                        'image' => $item->product->image ?? 'No image available', // Thêm trường image
+                    ];
+                }),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            // Nếu không tìm thấy đơn hàng
+            return response()->json(['error' => 'Order not found'], 404);
+        } catch (QueryException $e) {
+            // Lỗi cơ sở dữ liệu
+            return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
+        } catch (Exception $e) {
+            // Lỗi không mong muốn
+            return response()->json(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
         }
     }
 }
