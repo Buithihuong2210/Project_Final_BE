@@ -72,6 +72,7 @@ Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentRetur
 Route::get('/payments/total', [VNPayController::class, 'getTotalPayments']);
 
 Route::get('/orders/user/{userId}', [OrderController::class, 'viewAllOrdersByUserId']);
+Route::get('/order/{orderId}', [OrderController::class, 'getOrderById']);
 
 
 Route::get('/blogs/draft', [BlogController::class, 'listDraftBlogs']);
