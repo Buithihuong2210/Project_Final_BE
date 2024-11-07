@@ -472,24 +472,34 @@ class OrderController extends Controller
     {
         try {
             // Lấy đơn hàng theo order_id (nếu không tìm thấy sẽ trả về lỗi 404)
-            $order = Order::with('cart.items.product') // Tải các sản phẩm trong giỏ hàng
+            $order = Order::with('cart.items.product', 'voucher', 'shipping') // Tải các sản phẩm trong giỏ hàng, voucher, và shipping
             ->where('order_id', $orderId)
                 ->firstOrFail(); // Trả về lỗi 404 nếu không tìm thấy đơn hàng
 
-            // Trả về thông tin đơn hàng cùng với các sản phẩm trong giỏ hàng
+            // Trả về thông tin đơn hàng cùng với các sản phẩm trong giỏ hàng, voucher, và shipping
             return response()->json([
                 'order_id' => $order->order_id,
                 'order_date' => Carbon::parse($order->order_date)->format('Y-m-d'),
                 'total_amount' => number_format($order->total_amount, 2),
                 'shipping_address' => $order->shipping_address,
                 'status' => $order->status,
+                'voucher' => $order->voucher ? [
+                    'code' => $order->voucher->code,
+                    'discount_amount' => number_format($order->voucher->discount_amount, 2),
+                    'status' => $order->voucher->status,
+                ] : null, // If voucher exists, include it
+                'shipping' => $order->shipping ? [
+                    'name' => $order->shipping->name,
+                    'shipping_amount' => number_format($order->shipping->shipping_amount, 2),
+                    'method' => $order->shipping->method,
+                ] : null, // If shipping exists, include it
                 'cart_items' => $order->cart->items->map(function ($item) {
                     return [
                         'product_id' => $item->product->product_id ?? null,
                         'product_name' => $item->product->name ?? 'N/A',
                         'quantity' => $item->quantity,
                         'price' => number_format($item->product->discounted_price, 2),
-                        'image' => $item->product->image ?? 'No image available', // Thêm trường image
+                        'image' => $item->product->image ?? 'No image available',
                     ];
                 }),
             ]);
