@@ -14,7 +14,6 @@ use Carbon\Carbon;
 use App\Models\ShoppingCart;
 use App\Models\OrderItem;
 
-
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -429,5 +428,3 @@ class OrderController extends Controller
 
         return $status;
     }
-
-}

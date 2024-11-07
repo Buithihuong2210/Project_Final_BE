@@ -93,10 +93,10 @@ class VNPayController extends Controller
             return response()->json(['error' => 'Đã xảy ra lỗi trong quá trình tạo yêu cầu thanh toán: ' . $e->getMessage()], 500);
         }
     }
+
     // Xử lý kết quả sau khi thanh toán VNPay
     public function handlePaymentReturn(Request $request)
     {
-
         // Lấy các tham số từ request
         $transactionNo = $request->input('vnp_TransactionNo');
         $orderId = $request->input('vnp_TxnRef'); // ID đơn hàng
@@ -119,7 +119,6 @@ class VNPayController extends Controller
                 'updated_at' => now(), // Cập nhật thời gian
             ]);
 
-
             // Ghi lại giao dịch vào bảng payments
             DB::table('payments')->insert([
                 'order_id' => $orderId, // The order ID
@@ -133,12 +132,30 @@ class VNPayController extends Controller
                 'updated_at' => now(), // Thêm updated_at
             ]);
 
+            // Tạo tham số cho URL trả về
+            $paymentReturnUrl = env('VNPAY_RETURN_URL') . '?' . http_build_query([
+                    'vnp_Amount' => $amount,
+                    'vnp_BankCode' => $request->input('vnp_BankCode'),
+                    'vnp_BankTranNo' => $request->input('vnp_BankTranNo'),
+                    'vnp_CardType' => $request->input('vnp_CardType'),
+                    'vnp_OrderInfo' => $request->input('vnp_OrderInfo'),
+                    'vnp_PayDate' => $payDate,
+                    'vnp_ResponseCode' => $responseCode,
+                    'vnp_TmnCode' => $request->input('vnp_TmnCode'),
+                    'vnp_TransactionNo' => $transactionNo,
+                    'vnp_TransactionStatus' => $request->input('vnp_TransactionStatus'),
+                    'vnp_TxnRef' => $orderId,
+                    // Tính mã hash
+                    'vnp_SecureHash' => $this->generateSecureHash($request->all())
+                ]);
+
             // Tạo đường dẫn chi tiết đơn hàng cho frontend
             $orderUrl = url("/order/{$orderId}"); // Trang chi tiết đơn hàng
 
             return response()->json([
                 'message' => 'Payment successful. Order updated.',
                 'order_url' => $orderUrl, // Đường dẫn chi tiết đơn hàng
+                'payment_return_url' => $paymentReturnUrl // URL trả về đầy đủ
             ], 200);
 
         } else {
@@ -158,6 +175,72 @@ class VNPayController extends Controller
             return response()->json(['message' => 'Payment failed. Order has been canceled.'], 400);
         }
     }
+
+
+    public function generateSecureHash($params)
+    {
+        // Chọn ra các tham số không bao gồm vnp_SecureHash
+        $secureHashParams = array_filter($params, function($key) {
+            return $key !== 'vnp_SecureHash';
+        }, ARRAY_FILTER_USE_KEY);
+
+        // Sắp xếp các tham số theo thứ tự alphabet
+        ksort($secureHashParams);
+
+        // Kết nối các tham số theo dạng query string
+        $queryString = http_build_query($secureHashParams);
+
+        // Lấy khóa bí mật từ ENV hoặc cấu hình
+        $secureHashSecret = env('VNPAY_SECRET_KEY');  // Cần có vnpay_secret_key trong file .env
+
+        // Nối khóa bí mật vào cuối chuỗi query
+        $secureString = $queryString . '&' . 'vnp_SecureHashSecret=' . $secureHashSecret;
+
+        // Tính toán hash SHA256 từ chuỗi và trả về
+        return strtoupper(hash('sha256', $secureString));
+    }
+
+    // Hàm tạo payment_return_url
+    public function getPaymentReturnUrl(Request $request)
+    {
+        // Các tham số cần thiết từ request
+        $orderId = $request->query('order_id', 25);
+        $amount = $request->query('amount', 21002500);  // 21002500 đồng
+        $responseCode = $request->query('response_code', '00');  // Mã phản hồi thành công
+        $transactionNo = $request->query('transaction_no', '14656630');
+        $bankCode = $request->query('bank_code', 'NCB');  // Ví dụ về mã ngân hàng
+        $cardType = $request->query('card_type', 'ATM');  // Ví dụ về loại thẻ
+
+        // Các tham số cần thiết
+        $params = [
+            'vnp_Amount' => $amount,
+            'vnp_BankCode' => $bankCode,
+            'vnp_BankTranNo' => 'VNP14656630', // Ví dụ cho vnp_BankTranNo
+            'vnp_CardType' => $cardType,
+            'vnp_OrderInfo' => 'Thanh toán cho đơn hàng #' . $orderId, // Thông tin đơn hàng
+            'vnp_PayDate' => now()->format('YmdHis'),  // Thời gian thanh toán (theo định dạng YYYYMMDDHHMMSS)
+            'vnp_ResponseCode' => $responseCode,  // Mã phản hồi
+            'vnp_TmnCode' => '7UJJO3H2',  // Mã đơn vị thương mại
+            'vnp_TransactionNo' => $transactionNo, // Mã giao dịch
+            'vnp_TransactionStatus' => '00',  // Trạng thái giao dịch (đã thanh toán thành công)
+            'vnp_TxnRef' => $orderId,  // Mã tham chiếu đơn hàng
+        ];
+
+        // Tính toán SecureHash
+        $secureHash = $this->generateSecureHash($params);
+
+        // Thêm SecureHash vào tham số
+        $params['vnp_SecureHash'] = $secureHash;
+
+        // Tạo đường dẫn trả về
+        $returnUrl = env('VNPAY_RETURN_URL') . '?' . http_build_query($params);
+
+        return response()->json([
+            'payment_return_url' => $returnUrl
+        ]);
+    }
+
+
 
     public function getAllPayments()
     {
