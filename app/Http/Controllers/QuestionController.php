@@ -173,7 +173,10 @@ class QuestionController extends Controller
             ];
 
             // Return the updated question data
-            return response()->json($questionData, 200);
+            return response()->json([
+                'message' => 'Question updated successfully',
+                'data' => $questionData,
+            ], 200);
 
         } catch (\Exception $e) {
             return response()->json([

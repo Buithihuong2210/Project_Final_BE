@@ -114,6 +114,7 @@ class OrderController extends Controller
             }
 
             return response()->json([
+                'message' => 'Order created successfully!',
                 'user_id' => $order->user_id,
                 'shipping_address' => $order->shipping_address,
                 'shipping_id' => $order->shipping_id,
@@ -170,6 +171,7 @@ class OrderController extends Controller
             // Return only relevant fields in the JSON response
             return response()->json($orders->map(function ($order) {
                 return [
+                    
                     'order_id' => $order->order_id,
                     'user_id' => $order->user_id,
                     'shipping_address' => $order->shipping_address,
@@ -425,6 +427,7 @@ class OrderController extends Controller
 
         return $status;
     }
+<<<<<<< HEAD
 
     public function viewAllOrdersByUserId($userId)
     {
@@ -467,3 +470,5 @@ class OrderController extends Controller
 }
 
 
+=======
+>>>>>>> 86090602cb966d15faa8a98271ef08156cd71510
