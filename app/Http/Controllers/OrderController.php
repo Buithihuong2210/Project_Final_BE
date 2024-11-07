@@ -114,7 +114,6 @@ class OrderController extends Controller
             }
 
             return response()->json([
-                'message' => 'Order created successfully!',
                 'user_id' => $order->user_id,
                 'shipping_address' => $order->shipping_address,
                 'shipping_id' => $order->shipping_id,
@@ -163,47 +162,13 @@ class OrderController extends Controller
     }
 
     public function showAll()
-    {
-        try {
-            // Fetch all orders with related cart items and products
-            $orders = Order::with('cart.items.product')->get();
+{
+    try {
+        // Fetch all orders with related cart items and products
+        $orders = Order::with('cart.items.product')->get();
 
-            // Return only relevant fields in the JSON response
-            return response()->json($orders->map(function ($order) {
-                return [
-                    
-                    'order_id' => $order->order_id,
-                    'user_id' => $order->user_id,
-                    'user_name' => $order->user ? $order->user->name : 'N/A',
-                    'shipping_address' => $order->shipping_address,
-                    'shipping_id' => $order->shipping_id,
-                    'voucher_id' => $order->voucher_id,
-                    'shipping_name' => $order->shipping_name,
-                    'subtotal_of_cart' => number_format($order->subtotal_of_cart, 2),
-                    'shipping_cost' => number_format($order->shipping_cost, 2),
-                    'total_amount' => number_format($order->total_amount, 2),
-                    'payment_method' => $order->payment_method,
-                    'payment_status' => $order->payment_status,
-                    'status' => $order->status,
-                    'created_at' => $order->created_at,
-                    'updated_at' => $order->updated_at,
-                    'cart_items' => $order->cart->items->map(function ($item) {
-                        return [
-                            'product_id' => $item->product->product_id ?? null, // Ensure product_id is fetched
-                            'name' => $item->product->name ?? 'N/A',
-                            'price' => number_format($item->product->discounted_price, 2),
-                            'price_of_cart_item' => number_format($item->price, 2),
-                            'quantity' => $item->quantity,             // Get quantity
-                        ];
-                    }),
-                ];
-            }));
-        } catch (QueryException $e) {
-            return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
-        } catch (Exception $e) {
-            return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
-        }
     }
+}
 
     public function updateOrderStatus(Request $request, $order_id)
     {
@@ -467,9 +432,11 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
         }
+        
     }
 
-    public function getOrderById($orderId)
+
+       public function getOrderById($orderId)
     {
         try {
             // Lấy đơn hàng theo order_id (nếu không tìm thấy sẽ trả về lỗi 404)
@@ -515,6 +482,4 @@ class OrderController extends Controller
             return response()->json(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
         }
     }
-
 }
-
