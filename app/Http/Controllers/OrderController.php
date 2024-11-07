@@ -412,7 +412,6 @@ class OrderController extends Controller
 
         return response()->json($orderItems);
     }
-
     public function checkVnPayPaymentStatus($order_id)
     {
         // Giả định bạn gọi API VNPay để kiểm tra trạng thái thanh toán
@@ -464,8 +463,6 @@ class OrderController extends Controller
             return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
         }
     }
-
-
 }
 
 
