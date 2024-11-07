@@ -38,7 +38,7 @@ class SocialController extends Controller
 
         } catch (\Exception $e) {
             // Xử lý nếu gặp lỗi và chuyển hướng đến trang đăng nhập
-            return redirect('http://localhost:5173/login')->with('error', 'Lỗi đăng nhập Google');
+            return redirect('/login')->with('error', 'Lỗi đăng nhập Google');
         }
     }
 

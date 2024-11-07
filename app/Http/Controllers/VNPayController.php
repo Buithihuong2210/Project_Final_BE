@@ -94,78 +94,78 @@ class VNPayController extends Controller
         }
     }
     // Xử lý kết quả sau khi thanh toán VNPay
-    public function handlePaymentReturn(Request $request)
-    {
+        public function handlePaymentReturn(Request $request)
+        {
 
-        // Lấy tất cả tham số từ URL callback
-        $queryParams = $request->query();
+            // Lấy tất cả tham số từ URL callback
+            $queryParams = $request->query();
 
-        // Tạo lại URL hoàn chỉnh với tất cả query parameters
-        $url = url('/api/payment/vnpay/return') . '?' . http_build_query($queryParams);
+            // Tạo lại URL hoàn chỉnh với tất cả query parameters
+            $url = url('/api/payment/vnpay/return') . '?' . http_build_query($queryParams);
 
-        // Lấy các tham số từ request
-        $transactionNo = $request->input('vnp_TransactionNo');
-        $orderId = $request->input('vnp_TxnRef'); // ID đơn hàng
-        $responseCode = $request->input('vnp_ResponseCode');
-        $payDate = $request->input('vnp_PayDate');
-        $amount = $request->input('vnp_Amount'); // Lấy số tiền từ tham số URL
+            // Lấy các tham số từ request
+            $transactionNo = $request->input('vnp_TransactionNo');
+            $orderId = $request->input('vnp_TxnRef'); // ID đơn hàng
+            $responseCode = $request->input('vnp_ResponseCode');
+            $payDate = $request->input('vnp_PayDate');
+            $amount = $request->input('vnp_Amount'); // Lấy số tiền từ tham số URL
 
-        // Kiểm tra mã phản hồi
-        $order = Order::find($orderId);
-        if (!$order) {
-            return response()->json(['error' => 'Đơn hàng không tồn tại.'], 404);
+            // Kiểm tra mã phản hồi
+            $order = Order::find($orderId);
+            if (!$order) {
+                return response()->json(['error' => 'Đơn hàng không tồn tại.'], 404);
+            }
+
+            // Kiểm tra mã phản hồi
+            if ($responseCode === '00') {
+                // Cập nhật trạng thái đơn hàng thành 'Completed'
+                DB::table('orders')->where('order_id', $orderId)->update([
+                    'status' => 'Waiting for Delivery', // Đang chờ xử lý giao hàng
+                    'payment_status' => 'Paid', // Đã thanh toán
+                    'updated_at' => now(), // Cập nhật thời gian
+                ]);
+
+
+                // Ghi lại giao dịch vào bảng payments
+                DB::table('payments')->insert([
+                    'order_id' => $orderId, // The order ID
+                    'transaction_no' => $transactionNo,
+                    'bank_code' => $request->input('vnp_BankCode'),
+                    'card_type' => $request->input('vnp_CardType'),
+                    'pay_date' => now(), // Use current timestamp
+                    'status' => 'success', // Transaction status
+                    'amount' => $amount / 100, // Lưu số tiền đã thanh toán (vnp_Amount)
+                    'created_at' => now(), // Thêm created_at
+                    'updated_at' => now(), // Thêm updated_at
+                ]);
+
+
+                // Tạo đường dẫn chi tiết đơn hàng cho frontend
+                $orderUrl = url("/order/{$orderId}"); // Trang chi tiết đơn hàng
+
+                return response()->json([
+                    'message' => 'Payment successful. Order updated.',
+                    'order_url' => $orderUrl, // Đường dẫn chi tiết đơn hàng
+                    'url' => $url, // Đường dẫn API với các tham số query
+                ], 200);
+
+            } else {
+                // Nếu thanh toán thất bại, cập nhật trạng thái đơn hàng
+                DB::table('orders')->where('order_id', $orderId)->update([
+                    'status' => 'Failed',              // Trạng thái thanh toán thất bại
+                    'payment_status' => 'Failed',      // Trạng thái thanh toán thất bại
+                    'updated_at' => now(),             // Cập nhật thời gian
+                ]);
+
+                // Hủy đơn hàng nếu cả trạng thái đơn hàng và thanh toán đều 'Failed'
+                DB::table('orders')->where('order_id', $orderId)->update([
+                    'status' => 'Canceled',            // Trạng thái đơn hàng bị hủy
+                    'updated_at' => now(),             // Cập nhật thời gian
+                ]);
+
+                return response()->json(['message' => 'Payment failed. Order has been canceled.'], 400);
+            }
         }
-
-        // Kiểm tra mã phản hồi
-        if ($responseCode === '00') {
-            // Cập nhật trạng thái đơn hàng thành 'Completed'
-            DB::table('orders')->where('order_id', $orderId)->update([
-                'status' => 'Waiting for Delivery', // Đang chờ xử lý giao hàng
-                'payment_status' => 'Paid', // Đã thanh toán
-                'updated_at' => now(), // Cập nhật thời gian
-            ]);
-
-
-            // Ghi lại giao dịch vào bảng payments
-            DB::table('payments')->insert([
-                'order_id' => $orderId, // The order ID
-                'transaction_no' => $transactionNo,
-                'bank_code' => $request->input('vnp_BankCode'),
-                'card_type' => $request->input('vnp_CardType'),
-                'pay_date' => now(), // Use current timestamp
-                'status' => 'success', // Transaction status
-                'amount' => $amount / 100, // Lưu số tiền đã thanh toán (vnp_Amount)
-                'created_at' => now(), // Thêm created_at
-                'updated_at' => now(), // Thêm updated_at
-            ]);
-
-
-            // Tạo đường dẫn chi tiết đơn hàng cho frontend
-            $orderUrl = url("/order/{$orderId}"); // Trang chi tiết đơn hàng
-
-            return response()->json([
-                'message' => 'Payment successful. Order updated.',
-                'order_url' => $orderUrl, // Đường dẫn chi tiết đơn hàng
-                'url' => $url, // Đường dẫn API với các tham số query
-            ], 200);
-
-        } else {
-            // Nếu thanh toán thất bại, cập nhật trạng thái đơn hàng
-            DB::table('orders')->where('order_id', $orderId)->update([
-                'status' => 'Failed',              // Trạng thái thanh toán thất bại
-                'payment_status' => 'Failed',      // Trạng thái thanh toán thất bại
-                'updated_at' => now(),             // Cập nhật thời gian
-            ]);
-
-            // Hủy đơn hàng nếu cả trạng thái đơn hàng và thanh toán đều 'Failed'
-            DB::table('orders')->where('order_id', $orderId)->update([
-                'status' => 'Canceled',            // Trạng thái đơn hàng bị hủy
-                'updated_at' => now(),             // Cập nhật thời gian
-            ]);
-
-            return response()->json(['message' => 'Payment failed. Order has been canceled.'], 400);
-        }
-    }
 
     public function getAllPayments()
     {
