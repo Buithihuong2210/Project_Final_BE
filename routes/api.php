@@ -285,4 +285,3 @@ Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->grou
     });
 
 });
-
