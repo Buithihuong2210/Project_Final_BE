@@ -14,7 +14,6 @@ use Carbon\Carbon;
 use App\Models\ShoppingCart;
 use App\Models\OrderItem;
 
-
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -428,4 +427,45 @@ class OrderController extends Controller
         return $status;
     }
 
+    public function viewAllOrdersByUserId($userId)
+    {
+        try {
+            // Lấy tất cả đơn hàng của người dùng theo user_id
+            $orders = Order::with('cart.items.product')
+                ->where('user_id', $userId)
+                ->get();
+
+            // Kiểm tra nếu không có đơn hàng nào
+            if ($orders->isEmpty()) {
+                return response()->json(['message' => 'No orders found for this user'], 404);
+            }
+
+            // Trả về thông tin đơn hàng
+            return response()->json($orders->map(function ($order) {
+                return [
+                    'order_id' => $order->order_id,
+                    'order_date' => Carbon::parse($order->order_date)->format('Y-m-d'), // Chuyển đổi đúng cách
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'shipping_address' => $order->shipping_address,
+                    'cart_items' => $order->cart->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product->product_id ?? null,
+                            'product_name' => $item->product->name ?? 'N/A',
+                            'quantity' => $item->quantity,
+                            'price' => number_format($item->product->discounted_price, 2),
+                        ];
+                    }),
+                ];
+            }));
+
+        } catch (QueryException $e) {
+            return response()->json(['error' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()], 500);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
+        }
+    }
+
+
 }
+
+
