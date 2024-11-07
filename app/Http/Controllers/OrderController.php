@@ -454,6 +454,7 @@ class OrderController extends Controller
                             'product_name' => $item->product->name ?? 'N/A',
                             'quantity' => $item->quantity,
                             'price' => number_format($item->product->discounted_price, 2),
+                            'image' => $item->product->image ?? 'No image available',
                         ];
                     }),
                 ];
@@ -465,4 +466,5 @@ class OrderController extends Controller
             return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
         }
     }
+
 
