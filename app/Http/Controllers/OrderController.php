@@ -447,6 +447,7 @@ class OrderController extends Controller
                     'order_date' => Carbon::parse($order->order_date)->format('Y-m-d'), // Chuyển đổi đúng cách
                     'total_amount' => number_format($order->total_amount, 2),
                     'shipping_address' => $order->shipping_address,
+                    'status' => $order->status,
                     'cart_items' => $order->cart->items->map(function ($item) {
                         return [
                             'product_id' => $item->product->product_id ?? null,
@@ -464,4 +465,4 @@ class OrderController extends Controller
             return response()->json(['error' => 'Đã xảy ra lỗi không mong muốn: ' . $e->getMessage()], 500);
         }
     }
-}
+
