@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Models\BlogLike;
 use App\Models\Hashtag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -393,17 +395,36 @@ class BlogController extends Controller
 
     public function setLikes(Request $request, $blog_id)
     {
+        // Kiểm tra xem người dùng có xác thực hay không
+        $user = Auth::user(); // Lấy thông tin người dùng hiện tại
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401); // Trả về lỗi nếu người dùng chưa xác thực
+        }
+
         // Xác thực và xử lý số lượng likes
         $validatedData = $request->validate([
-            'like' => 'required|integer|min:0', // Ví dụ, yêu cầu số lượng likes phải là số nguyên không âm
+            'like' => 'required|integer|min:0', // Yêu cầu số lượng likes phải là số nguyên không âm
         ]);
 
         // Tìm blog theo ID
         $blog = Blog::findOrFail($blog_id);
 
+        // Kiểm tra xem người dùng đã like blog này chưa
+        $existingLike = BlogLike::where('blog_id', $blog_id)->where('user_id', $user->id)->first();
+
+        if ($existingLike) {
+            return response()->json(['message' => 'You have already liked this blog'], 400); // Nếu người dùng đã like, trả về lỗi
+        }
+
         // Cập nhật số lượt like
         $blog->like = $validatedData['like'];
         $blog->save();
+
+        // Thêm like mới vào bảng blog_likes
+        BlogLike::create([
+            'blog_id' => $blog_id,
+            'user_id' => $user->id,
+        ]);
 
         return response()->json([
             'message' => 'Likes updated successfully!',
@@ -412,15 +433,34 @@ class BlogController extends Controller
         ], 200);
     }
 
-    // Increment the like count for a blog
+// Tăng số lượt like lên 1 cho blog
     public function likeBlog($blog_id)
     {
         try {
+            // Kiểm tra xem người dùng có xác thực hay không
+            $user = Auth::user(); // Lấy thông tin người dùng hiện tại
+            if (!$user) {
+                return response()->json(['message' => 'User not authenticated'], 401); // Trả về lỗi nếu người dùng chưa xác thực
+            }
+
             // Tìm blog theo ID
             $blog = Blog::findOrFail($blog_id);
 
+            // Kiểm tra xem người dùng đã like blog này chưa
+            $existingLike = BlogLike::where('blog_id', $blog_id)->where('user_id', $user->id)->first();
+
+            if ($existingLike) {
+                return response()->json(['message' => 'You have already liked this blog'], 400); // Nếu người dùng đã like, trả về lỗi
+            }
+
             // Tăng số lượt like lên 1
             $blog->increment('like');
+
+            // Thêm like mới vào bảng blog_likes
+            BlogLike::create([
+                'blog_id' => $blog_id,
+                'user_id' => $user->id,
+            ]);
 
             // Trả về thông tin blog sau khi update lượt like
             return response()->json([
@@ -442,6 +482,52 @@ class BlogController extends Controller
             ], 500);
         }
     }
+
+    // Hủy like cho blog
+    public function unlikeBlog($blog_id)
+    {
+        try {
+            // Kiểm tra xem người dùng đã xác thực chưa
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['message' => 'User not authenticated'], 401);
+            }
+
+            // Tìm blog theo ID
+            $blog = Blog::findOrFail($blog_id);
+
+            // Kiểm tra xem người dùng đã like blog này chưa
+            $like = BlogLike::where('blog_id', $blog_id)->where('user_id', $user->id)->first();
+
+            if (!$like) {
+                return response()->json(['message' => 'You have not liked this blog'], 400);
+            }
+
+            // Xóa like
+            $like->delete();
+
+            // Giảm số lượt like của blog
+            $blog->decrement('like');
+
+            return response()->json([
+                'message' => 'Blog unliked successfully!',
+                'blog_id' => $blog->blog_id,
+                'like' => $blog->like,
+            ], 200);
+        } catch (\Exception $e) {
+            // Log lỗi nếu có
+            Log::error('Error unliking blog', [
+                'blog_id' => $blog_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while unliking the blog',
+                'error' => 'Internal Server Error',
+            ], 500);
+        }
+    }
+
 
     // Delete a blog
     public function destroy($blog_id)

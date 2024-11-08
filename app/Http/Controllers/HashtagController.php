@@ -28,28 +28,16 @@ class HashtagController extends Controller
             // Lấy chuỗi tìm kiếm từ yêu cầu
             $query = $request->input('query');
 
-            // Loại bỏ dấu ngoặc nhọn và các ký tự không mong muốn (nếu có)
+            // Loại bỏ dấu ngoặc nhọn và các ký tự không mong muốn
             $cleanedQuery = str_replace(['{', '}'], '', $query);
 
-            // Kiểm tra xem có hashtag nào có tên chứa chuỗi tìm kiếm không
-            $hashtags = Hashtag::where('name', 'like', '%' . $cleanedQuery . '%')->get();
+            // Tìm kiếm hashtag có chứa chuỗi đã loại bỏ dấu ngoặc
+            $hashtags = Hashtag::where('name', 'like', '%' . $cleanedQuery . '%')
+                ->orderBy('name')
+                ->limit(10) // Giới hạn kết quả trả về nếu cần
+                ->get();
 
-            // Nếu không tìm thấy hashtag nào
-            if ($hashtags->isEmpty()) {
-                // Tự động tạo mới một hashtag nếu chưa có
-                $hashtag = Hashtag::create([
-                    'name' => $cleanedQuery,
-                ]);
-
-                // Trả về thông báo đã tạo hashtag mới
-                return response()->json([
-                    'message' => 'Hashtag created successfully.',
-                    'hashtag_id' => $hashtag->id,
-                    'name' => $hashtag->name,
-                ], 201);
-            }
-
-            // Nếu tìm thấy hashtag, trả về danh sách các hashtag tìm được
+            // Trả về danh sách các hashtag tìm được
             return response()->json($hashtags, 200);
 
         } catch (\Exception $e) {
