@@ -155,8 +155,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{order_id}', [ReviewController::class, 'store']);
         Route::put('/{order_id}/{review_id}', [ReviewController::class, 'update']); // Update a review
         Route::delete('/{order_id}/{review_id}', [ReviewController::class, 'destroy']); // Delete a specific review
-        Route::get('/product/{product_id}', [ReviewController::class, 'getReviewsByProduct']);
         Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product
+        Route::get('/user', [ReviewController::class, 'getUserReviews']); // Count reviews for a product
+
     });
 
     Route::prefix('blogs')->group(function () {
@@ -256,6 +257,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('manager')->group(func
     });
 
     Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+
+    Route::prefix('reviews')->group(function () {
+        Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product
+    });
 
 });
 
