@@ -16,34 +16,101 @@ class HashtagController extends Controller
         return Hashtag::all();
     }
 
-    public function store(Request $request)
+    // Phương thức tìm kiếm hashtag và tự động thêm nếu không có
+    public function search(Request $request)
     {
-        // Validate the incoming request
+        // Validate query parameter
         $request->validate([
-            'name' => 'required|string|max:255',
+            'query' => 'required|string|max:255',
         ]);
 
         try {
-            // Create a new hashtag
+            // Lấy chuỗi tìm kiếm từ yêu cầu
+            $query = $request->input('query');
+
+            // Loại bỏ dấu ngoặc nhọn và các ký tự không mong muốn (nếu có)
+            $cleanedQuery = str_replace(['{', '}'], '', $query);
+
+            // Kiểm tra xem có hashtag nào có tên chứa chuỗi tìm kiếm không
+            $hashtags = Hashtag::where('name', 'like', '%' . $cleanedQuery . '%')->get();
+
+            // Nếu không tìm thấy hashtag nào
+            if ($hashtags->isEmpty()) {
+                // Tự động tạo mới một hashtag nếu chưa có
+                $hashtag = Hashtag::create([
+                    'name' => $cleanedQuery,
+                ]);
+
+                // Trả về thông báo đã tạo hashtag mới
+                return response()->json([
+                    'message' => 'Hashtag created successfully.',
+                    'hashtag_id' => $hashtag->id,
+                    'name' => $hashtag->name,
+                ], 201);
+            }
+
+            // Nếu tìm thấy hashtag, trả về danh sách các hashtag tìm được
+            return response()->json($hashtags, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while searching for hashtags.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // Phương thức lưu hashtag mới
+    public function store(Request $request)
+    {
+        // Kiểm tra xem hashtag đã tồn tại chưa
+        $request->validate([
+            'name' => 'required|string|max:255|unique:hashtags,name',
+        ]);
+
+        try {
             $hashtag = Hashtag::create([
                 'name' => $request->input('name'),
             ]);
 
-            // Return the response
             return response()->json([
                 'hashtag_id' => $hashtag->id,
                 'name' => $hashtag->name,
                 'created_at' => $hashtag->created_at,
                 'updated_at' => $hashtag->updated_at,
             ], 201);
-
         } catch (\Exception $e) {
-            // Log the actual error message
             \Log::error('Error creating hashtag: ' . $e->getMessage());
             return response()->json(['error' => 'Could not create hashtag. Details: ' . $e->getMessage()], 500);
         }
     }
 
+    public function searchOrCreate(Request $request)
+    {
+        // Validate the incoming query parameter
+        $request->validate([
+            'query' => 'required|string|max:255',
+        ]);
+
+        // Tìm kiếm hashtags chứa từ khóa người dùng nhập
+        $hashtags = Hashtag::where('name', 'like', '%' . $request->query('query') . '%')->get();
+
+        // Nếu tìm thấy hashtags, trả về danh sách
+        if ($hashtags->isNotEmpty()) {
+            return response()->json($hashtags, 200);
+        }
+
+        // Nếu không tìm thấy hashtags, tạo mới
+        $newHashtag = Hashtag::create([
+            'name' => $request->query('query'),
+        ]);
+
+        return response()->json([
+            'message' => 'Hashtag created successfully.',
+            'hashtag_id' => $newHashtag->id,
+            'name' => $newHashtag->name,
+        ], 201);
+    }
     public function show($id)
     {
         try {
