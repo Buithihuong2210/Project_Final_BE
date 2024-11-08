@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class SocialAuthController extends Controller
                     'name' => $facebookUser->getName(),
                     'facebook_id' => $facebookUser->getId(),
                     'image' => $facebookUser->getAvatar(),
-                    'password'=>'12345678'
+                    'password' => Hash::make('12345678')
                     // Add other user fields as necessary
                 ]
             );

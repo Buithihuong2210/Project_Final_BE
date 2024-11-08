@@ -59,9 +59,7 @@ Route::prefix('upload')->group(function () {
     Route::post('/', [ImageController::class, 'uploadImage']);
 });
 
-Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
-Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
-
+//Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
 
 Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
 Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
@@ -111,6 +109,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/blogs/like/{blog_id}', [BlogController::class, 'likeBlog']);
+    Route::delete('/blogs/like/{blog_id}', [BlogController::class, 'unlikeBlog']);
+
 
     Route::get('/my-blogs', [BlogController::class, 'showUserBlogs']);
 
@@ -236,8 +238,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('manager')->group(func
 
     Route::prefix('blogs')->group(function () {
         Route::delete('/{blog}', [BlogController::class, 'destroy']);
-        Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
+//        Route::post('/{blog_id}/like', [BlogController::class, 'likeBlog']);
         Route::put('/{blog_id}/likes', [BlogController::class, 'setLikes']); // Đường dẫn để cập nhật số lượt like
+
     });
 
     Route::prefix('shippings')->group(function () {
