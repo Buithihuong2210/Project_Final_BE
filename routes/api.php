@@ -102,6 +102,10 @@ Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByB
 Route::get('/hashtags/search', [HashtagController::class, 'search']);
 Route::get('/hashtags/search-or-create', [HashtagController::class, 'searchOrCreate']);
 
+Route::prefix('hashtags')->group(function () {
+    Route::get('/', [HashtagController::class, 'index']); // List all hashtags
+    Route::post('/', [HashtagController::class, 'store']); // Store a new hashtag
+});
 
 
 // User routes
