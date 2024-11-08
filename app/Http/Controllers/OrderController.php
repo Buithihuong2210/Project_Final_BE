@@ -167,11 +167,10 @@ class OrderController extends Controller
         try {
             // Fetch all orders with related cart items and products
             $orders = Order::with('cart.items.product')->get();
-
+    
             // Return only relevant fields in the JSON response
             return response()->json($orders->map(function ($order) {
                 return [
-                    
                     'order_id' => $order->order_id,
                     'user_id' => $order->user_id,
                     'user_name' => $order->user ? $order->user->name : 'N/A',
@@ -187,15 +186,15 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'cart_items' => $order->cart->items->map(function ($item) {
+                    'cart_items' => $order->cart ? $order->cart->items->map(function ($item) {
                         return [
                             'product_id' => $item->product->product_id ?? null, // Ensure product_id is fetched
                             'name' => $item->product->name ?? 'N/A',
                             'price' => number_format($item->product->discounted_price, 2),
                             'price_of_cart_item' => number_format($item->price, 2),
-                            'quantity' => $item->quantity,             // Get quantity
+                            'quantity' => $item->quantity, // Get quantity
                         ];
-                    }),
+                    }) : [], // Return an empty array if no cart exists
                 ];
             }));
         } catch (QueryException $e) {
@@ -204,6 +203,7 @@ class OrderController extends Controller
             return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
         }
     }
+    
 
     public function updateOrderStatus(Request $request, $order_id)
     {
@@ -517,4 +517,3 @@ class OrderController extends Controller
     }
 
 }
-
