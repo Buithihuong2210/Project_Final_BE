@@ -100,6 +100,9 @@ Route::prefix('vouchers')->group(function () {
 });
 
 
+Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByBrand']);
+
+
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
