@@ -176,7 +176,6 @@ class VNPayController extends Controller
         }
     }
 
-
     public function generateSecureHash($params)
     {
         // Chọn ra các tham số không bao gồm vnp_SecureHash
@@ -200,55 +199,12 @@ class VNPayController extends Controller
         return strtoupper(hash('sha256', $secureString));
     }
 
-    // Hàm tạo payment_return_url
-    public function getPaymentReturnUrl(Request $request)
-    {
-        // Các tham số cần thiết từ request
-        $orderId = $request->query('order_id', 25);
-        $amount = $request->query('amount', 21002500);  // 21002500 đồng
-        $responseCode = $request->query('response_code', '00');  // Mã phản hồi thành công
-        $transactionNo = $request->query('transaction_no', '14656630');
-        $bankCode = $request->query('bank_code', 'NCB');  // Ví dụ về mã ngân hàng
-        $cardType = $request->query('card_type', 'ATM');  // Ví dụ về loại thẻ
-
-        // Các tham số cần thiết
-        $params = [
-            'vnp_Amount' => $amount,
-            'vnp_BankCode' => $bankCode,
-            'vnp_BankTranNo' => 'VNP14656630', // Ví dụ cho vnp_BankTranNo
-            'vnp_CardType' => $cardType,
-            'vnp_OrderInfo' => 'Thanh toán cho đơn hàng #' . $orderId, // Thông tin đơn hàng
-            'vnp_PayDate' => now()->format('YmdHis'),  // Thời gian thanh toán (theo định dạng YYYYMMDDHHMMSS)
-            'vnp_ResponseCode' => $responseCode,  // Mã phản hồi
-            'vnp_TmnCode' => '7UJJO3H2',  // Mã đơn vị thương mại
-            'vnp_TransactionNo' => $transactionNo, // Mã giao dịch
-            'vnp_TransactionStatus' => '00',  // Trạng thái giao dịch (đã thanh toán thành công)
-            'vnp_TxnRef' => $orderId,  // Mã tham chiếu đơn hàng
-        ];
-
-        // Tính toán SecureHash
-        $secureHash = $this->generateSecureHash($params);
-
-        // Thêm SecureHash vào tham số
-        $params['vnp_SecureHash'] = $secureHash;
-
-        // Tạo đường dẫn trả về
-        $returnUrl = env('VNPAY_RETURN_URL') . '?' . http_build_query($params);
-
-        return response()->json([
-            'payment_return_url' => $returnUrl
-        ]);
-    }
-
-
-
     public function getAllPayments()
     {
         try {
             // Giả sử bạn có một bảng 'payments' lưu trữ tất cả các giao dịch thanh toán
             // Lấy tất cả thông tin từ bảng payments
             $payments = Payment::all();
-
             // Trả về danh sách các payment dưới dạng JSON
             return response()->json(['payments' => $payments], 200);
         } catch (\Exception $e) {
@@ -269,6 +225,5 @@ class VNPayController extends Controller
             return response()->json(['error' => 'Unable to fetch total payments: ' . $e->getMessage()], 500);
         }
     }
-
 
 }

@@ -225,7 +225,6 @@ class BlogController extends Controller
         }
     }
 
-
     // Update a blog as a regular user (only if the blog is in draft status)
     public function updateUser(Request $request, $blog_id)
     {
@@ -364,8 +363,6 @@ class BlogController extends Controller
         }
     }
 
-
-
     // Change the blog status
     public function changeStatus(Request $request, $blog_id)
     {
@@ -416,7 +413,6 @@ class BlogController extends Controller
     }
 
     // Increment the like count for a blog
-
     public function likeBlog($blog_id)
     {
         try {
@@ -551,6 +547,5 @@ class BlogController extends Controller
             ], 500);
         }
     }
-
 
 }

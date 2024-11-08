@@ -62,7 +62,7 @@ class SurveyController extends Controller
         }
     }
 
-    public function gdestroy($survey_id)
+    public function destroy($survey_id)
     {
         try {
             $survey = Survey::findOrFail($survey_id);

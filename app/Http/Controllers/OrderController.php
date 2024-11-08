@@ -92,6 +92,7 @@ class OrderController extends Controller
                 'payment_status' => $paymentStatus,
                 'status' => $orderStatus,
                 'order_date' => now(),
+                'discount' => $discountAmount, // Lưu giá trị giảm giá vào trường discount
             ]);
 
 
