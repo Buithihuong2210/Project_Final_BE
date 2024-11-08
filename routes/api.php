@@ -101,6 +101,9 @@ Route::prefix('vouchers')->group(function () {
 
 
 Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByBrand']);
+Route::get('/hashtags/search', [HashtagController::class, 'search']);
+Route::get('/hashtags/search-or-create', [HashtagController::class, 'searchOrCreate']);
+
 
 
 // User routes
