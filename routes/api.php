@@ -100,6 +100,9 @@ Route::prefix('vouchers')->group(function () {
 });
 
 
+Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByBrand']);
+
+
 // User routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
@@ -252,6 +255,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('manager')->group(func
         Route::put('/{voucher_id}/status', [VoucherController::class, 'changeStatus']); // Change status of voucher
     });
 
+    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
 
 });
 

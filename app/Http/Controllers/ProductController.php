@@ -47,8 +47,6 @@ class ProductController extends Controller
             return response()->json(['message' => 'An error occurred while fetching products.', 'error' => $e->getMessage()], 500);
         }
     }
-
-
     // Store a new product
     public function store(Request $request)
     {
@@ -235,6 +233,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'An error occurred while updating the product status.', 'error' => $e->getMessage()], 500);
         }
     }
+
     public function getReviewsByProduct($product_id)
     {
         try {
