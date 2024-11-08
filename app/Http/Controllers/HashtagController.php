@@ -105,8 +105,6 @@ class HashtagController extends Controller
         }
     }
 
-// Retrieve all blogs related to a specific hashtag
-
     public function getByID($id)
     {
         try {

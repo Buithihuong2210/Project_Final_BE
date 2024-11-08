@@ -10,26 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-    // Get all reviews for a specific product
-    public function getReviewsByProduct($product_id)
-    {
-        try {
-            // Check if the product exists
-            $product = Product::find($product_id);
-            if (!$product) {
-                return response()->json(['message' => 'Product not found'], 404);
-            }
-
-            // Get all reviews for the specified product
-            $reviews = Review::with(['user', 'product'])->where('product_id', $product_id)->get();
-
-            return response()->json($reviews, 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to retrieve reviews', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-
     // Store a new review and update product rating
     public function store(Request $request, $order_id)
     {
@@ -68,7 +48,7 @@ class ReviewController extends Controller
         if ($existingReviews > 0) {
             return response()->json(['message' => 'You have already reviewed this order.'], 403);
         }
-        
+
         // Lưu đánh giá cho từng sản phẩm
         foreach ($request->product_reviews as $index => $reviewData) {
             // Tìm sản phẩm tương ứng từ order_items dựa trên thứ tự
@@ -93,7 +73,7 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Reviews created successfully.'], 201);
     }
-    public function updateProductRating($product_id)
+    private function updateProductRating($product_id)
     {
         // Retrieve the ratings for the product
         $ratings = Review::where('product_id', $product_id)->pluck('rate');
@@ -172,7 +152,6 @@ class ReviewController extends Controller
         }
     }
 
-
     public function countReviewsByProduct($product_id)
     {
         try {
@@ -192,6 +171,34 @@ class ReviewController extends Controller
             ], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to count reviews', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getUserReviews()
+    {
+        try {
+            // Lấy user_id từ thông tin người dùng đã xác thực
+            $user_id = Auth::id();
+
+            // Kiểm tra nếu người dùng không xác thực
+            if (!$user_id) {
+                return response()->json(['message' => 'User not authenticated.'], 401);
+            }
+
+            // Lấy tất cả các đánh giá của người dùng này
+            $reviews = Review::with(['user:id,name,image', 'product:product_id,name,image']) // Lấy thông tin user và product
+            ->where('user_id', $user_id)
+                ->get();
+
+            // Nếu không có đánh giá nào
+            if ($reviews->isEmpty()) {
+                return response()->json(['message' => 'No reviews found for this user.'], 404);
+            }
+
+            // Trả về các đánh giá của người dùng
+            return response()->json($reviews, 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to retrieve user reviews', 'error' => $e->getMessage()], 500);
         }
     }
 

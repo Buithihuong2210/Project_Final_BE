@@ -21,4 +21,8 @@ class Brand extends Model
     {
         return $this->hasMany(Product::class, 'brand_id', 'brand_id');
     }
+    public function getTotalProductsAttribute()
+    {
+        return $this->products()->count();
+    }
 }

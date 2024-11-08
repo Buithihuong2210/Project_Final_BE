@@ -14,7 +14,7 @@ class CommentController extends Controller
             // Validate input data
             $validatedData = $request->validate([
                 'content' => 'required|string',
-                'parent_id' => 'nullable|exists:comments,comment_id', // Check if parent_id exists in the comments table
+                'parent_id' => 'nullable|exists:comments,comment_id', // Check if parent_id exists in comments table
             ]);
 
             // Create a new comment
@@ -25,8 +25,8 @@ class CommentController extends Controller
                 'parent_id' => $validatedData['parent_id'] ?? null, // Assign parent_id if provided
             ]);
 
-            // Load the associated user
-            $comment->load('user:id,name,image,dob,role,phone,gender,email'); // Load only id and name from user for efficiency
+            // Load the associated user and replies recursively
+            $comment->load('user:id,name,image,dob,role,phone,gender,email', 'replies');
 
             // Return the newly created comment with a 201 status code
             return response()->json($comment, 201);
@@ -44,28 +44,31 @@ class CommentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-        
     }
 
     // Get all comments for a specific blog
     public function index($blog_id)
     {
         try {
-            // Get comments related to the blog and eager load relationships with user and replies
+            // Lấy tất cả các bình luận cha của blog
             $comments = Comment::where('blog_id', $blog_id)
-                ->with(['user:id,name,image,dob,role,phone,gender,email', 'replies.user:id,name,image,dob,role,phone,gender,email']) // Removed 'user:' prefix here
-                ->whereNull('parent_id') // Chỉ lấy các comment cha
-                ->get();
+                ->whereNull('parent_id') // Chỉ lấy các bình luận cha
+                ->with('user:id,name,image,dob,role,phone,gender,email') // Eager load người dùng của bình luận cha
+                ->get()
+                ->each(function($comment) {
+                    // Lấy tất cả các bình luận con và người dùng liên quan (đệ quy)
+                    $comment->setRelation('replies', $comment->getRepliesWithUsers());
+                });
 
-            // Check if comments are empty
+            // Kiểm tra nếu không có bình luận nào
             if ($comments->isEmpty()) {
-                return response()->json([], 200); // Return an empty array
+                return response()->json([], 200); // Trả về mảng rỗng
             }
 
             return response()->json($comments, 200);
 
         } catch (\Exception $e) {
-            // Handle errors
+            // Xử lý lỗi
             return response()->json([
                 'message' => 'An error occurred while retrieving comments',
                 'error' => $e->getMessage(),

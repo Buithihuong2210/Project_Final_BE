@@ -79,7 +79,6 @@ class ResponseController extends Controller
         }
     }
 
-
     // Show a specific response by its ID
     public function show($response_id)
     {
@@ -139,7 +138,7 @@ class ResponseController extends Controller
         }
     }
 
-        public function showResponse()
+    public function showResponse()
     {
         // Lấy user_id của người dùng đã đăng nhập
         $userId = auth()->id();
@@ -166,7 +165,6 @@ class ResponseController extends Controller
         // Trả về kết quả dưới dạng JSON
         return response()->json($responses);
     }
-
 
     public function recommendItem()
     {
@@ -214,7 +212,6 @@ class ResponseController extends Controller
         // Trả về danh sách sản phẩm được đề xuất
         return response()->json($recommendedProducts, 200);
     }
-
 
     // Update a specific response by its ID
     public function update(Request $request, $survey_id)

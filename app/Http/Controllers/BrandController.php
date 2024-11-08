@@ -13,7 +13,8 @@ class BrandController extends Controller
     // List all brands
     public function index()
     {
-        return response()->json(Brand::all(), 200);
+        $brands = Brand::all();  // Dữ liệu sẽ có thêm trường total_products
+        return response()->json($brands, 200);
     }
 
     // Store a new brand
@@ -43,7 +44,7 @@ class BrandController extends Controller
         $brand = Brand::find($id);
 
         if (is_null($brand)) {
-            return response()->json(['message' => 'Brand not found'], 404);
+            return response()->json(['message' => 'Nhãn hiệu không tìm thấy'], 404);
         }
 
         return response()->json($brand, 200);
@@ -99,5 +100,20 @@ class BrandController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function getProductsByBrand($brandId)
+    {
+        // Tìm nhãn hiệu theo brand_id
+        $brand = Brand::find($brandId);
+
+        if (is_null($brand)) {
+            return response()->json(['message' => 'Nhãn hiệu không tìm thấy'], 404);
+        }
+
+        // Trả về tất cả các sản phẩm liên quan đến nhãn hiệu này
+        $products = $brand->products;
+
+        return response()->json($products, 200);
     }
 }
