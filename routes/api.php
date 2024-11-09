@@ -322,7 +322,7 @@ Route::middleware(['auth:sanctum', 'role:staff'])->prefix('manager')->group(func
         Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
         Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
         Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
-        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
+    Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
         Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
     });
 
@@ -339,8 +339,4 @@ Route::middleware(['auth:sanctum', 'role:staff'])->prefix('manager')->group(func
         Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
         Route::get('/{blog}', [BlogController::class, 'show']);
     });
-
-    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
-
-});
 
