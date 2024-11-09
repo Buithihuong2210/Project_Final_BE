@@ -59,11 +59,10 @@ Route::prefix('upload')->group(function () {
     Route::post('/', [ImageController::class, 'uploadImage']);
 });
 
-//Route::put('/blogs/set-likes/{blog_id}', [BlogController::class, 'setLikes']);
-
 Route::get('/orders/{order_id}/items', [OrderController::class, 'getOrderItems']);
 Route::get('/products/{product_id}/reviews', [ProductController::class, 'getReviewsByProduct']);
-Route::get('/payments', [VNPayController::class, 'getAllPayments']);
+
+
 Route::get('/payment/vnpay/return', [VNPayController::class, 'handlePaymentReturn']);
 
 
@@ -99,12 +98,13 @@ Route::prefix('vouchers')->group(function () {
 
 
 Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByBrand']);
-Route::get('/hashtags/search', [HashtagController::class, 'search']);
-Route::get('/hashtags/search-or-create', [HashtagController::class, 'searchOrCreate']);
+
+//Route::get('brands/products/{brandId}', [BrandController::class, 'getProductsByBrand'])->middleware('can:view products of a brand');
 
 Route::prefix('hashtags')->group(function () {
     Route::get('/', [HashtagController::class, 'index']); // List all hashtags
     Route::post('/', [HashtagController::class, 'store']); // Store a new hashtag
+    Route::get('/search', [HashtagController::class, 'search']);
 });
 
 
@@ -124,13 +124,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Survey routes for users
     Route::prefix('surveys')->group(function () {
-            Route::post('/{survey_id}/responses', [ResponseController::class, 'store']); // Submit a response for a specific survey
-        Route::put('/{survey_id}/responses', [ResponseController::class, 'update']); // Cập nhật tất cả phản hồi cho khảo sát
+            Route::post('/{survey_id}/responses', [ResponseController::class, 'store']);
+        Route::put('/{survey_id}/responses', [ResponseController::class, 'update']);
     });
 
     Route::prefix('responses')->group(function () {
         Route::get('/my', [ResponseController::class, 'showResponse']);
-        Route::get('/recommend', [ResponseController::class, 'recommendItem']); // Thêm route cho hàm recommendItem
+        Route::get('/recommend', [ResponseController::class, 'recommendItem']);
     });
 
     Route::prefix('payment')->group(function () {
@@ -272,10 +272,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('manager')->group(func
         Route::get('/product/{product_id}/count', [ReviewController::class, 'countReviewsByProduct']); // Count reviews for a product
     });
 
-});
-
-// Routes cho admin và staff
-Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->group(function () {
     Route::prefix('surveys')->group(function () {
         Route::post('/', [SurveyController::class, 'store']); // Create a new survey
         Route::get('/', [SurveyController::class, 'index']); // List all surveys
@@ -307,4 +303,44 @@ Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->grou
         Route::get('/{blog}', [BlogController::class, 'show']);
     });
 
+    Route::get('/payments', [VNPayController::class, 'getAllPayments']);
+
 });
+
+// Routes cho staff
+Route::middleware(['auth:sanctum', 'role:staff'])->prefix('manager')->group(function () {
+    Route::prefix('surveys')->group(function () {
+        Route::post('/', [SurveyController::class, 'store']); // Create a new survey
+        Route::get('/', [SurveyController::class, 'index']); // List all surveys
+        Route::get('/{survey_id}', [SurveyController::class, 'show']); // Show a specific survey
+        Route::put('/{survey_id}', [SurveyController::class, 'update']); // Update a specific survey
+        Route::delete('/{survey_id}', [SurveyController::class, 'destroy']); // Delete a specific survey
+    });
+
+    // Question management routes
+    Route::prefix('surveys/{survey_id}/questions')->group(function () {
+        Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
+        Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
+        Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
+        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
+        Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
+    });
+
+    // Response management routes (optional, if admins need to see all responses)
+    Route::prefix('responses')->group(function () {
+        Route::get('/', [ResponseController::class, 'index']); // List all responses
+        Route::get('/{response_id}', [ResponseController::class, 'show']); // Show a specific response
+        Route::delete('/{response_id}', [ResponseController::class, 'destroy']); // Delete a specific response
+    });
+
+    Route::prefix('blogs')->group(function () {
+        Route::post('/', [BlogController::class, 'store']);
+        Route::put('/{blog_id}', [BlogController::class, 'updateAdmin']);
+        Route::put('/changestatus/{blog_id}', [BlogController::class, 'changeStatus']);
+        Route::get('/{blog}', [BlogController::class, 'show']);
+    });
+
+    Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+
+});
+

@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -23,6 +26,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // Đăng ký Gate kiểm tra quyền admin
+        Gate::define('view products of a brand', function (User $user) {
+            // Kiểm tra xem người dùng có phải là admin không
+            return $user->hasRole('admin');
+        });
     }
 }

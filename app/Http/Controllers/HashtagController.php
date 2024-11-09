@@ -73,32 +73,6 @@ class HashtagController extends Controller
         }
     }
 
-    public function searchOrCreate(Request $request)
-    {
-        // Validate the incoming query parameter
-        $request->validate([
-            'query' => 'required|string|max:255',
-        ]);
-
-        // Tìm kiếm hashtags chứa từ khóa người dùng nhập
-        $hashtags = Hashtag::where('name', 'like', '%' . $request->query('query') . '%')->get();
-
-        // Nếu tìm thấy hashtags, trả về danh sách
-        if ($hashtags->isNotEmpty()) {
-            return response()->json($hashtags, 200);
-        }
-
-        // Nếu không tìm thấy hashtags, tạo mới
-        $newHashtag = Hashtag::create([
-            'name' => $request->query('query'),
-        ]);
-
-        return response()->json([
-            'message' => 'Hashtag created successfully.',
-            'hashtag_id' => $newHashtag->id,
-            'name' => $newHashtag->name,
-        ], 201);
-    }
     public function show($id)
     {
         try {
