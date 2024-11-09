@@ -41,13 +41,50 @@ class BrandController extends Controller
     // Show a specific brand
     public function show($id)
     {
-        $brand = Brand::find($id);
+        // Find the brand by its ID
+        $brand = Brand::with('products')->find($id);
 
+        // Check if the brand exists
         if (is_null($brand)) {
             return response()->json(['message' => 'Nhãn hiệu không tìm thấy'], 404);
         }
 
-        return response()->json($brand, 200);
+        // Prepare the brand data in the required format
+        $brandData = [
+            'brand' => [
+                'brand_id' => $brand->brand_id,
+                'name' => $brand->name,
+                'description' => $brand->description,
+                'image' => asset('storage/images/' . $brand->image),
+                'total_products' => $brand->products->count(),
+                'created_at' => $brand->created_at,
+                'updated_at' => $brand->updated_at,
+                'products' => $brand->products->map(function ($product) {
+                    return [
+                        'product_id' => $product->product_id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'price' => $product->price,
+                        'discount' => $product->discount,
+                        'discounted_price' => $product->discounted_price,
+                        'rating' => $product->rating,
+                        'volume' => $product->volume,
+                        'nature' => $product->nature,
+                        'quantity' => $product->quantity,
+                        'brand_id' => $product->brand_id,
+                        'status' => $product->status,
+                        'created_at' => $product->created_at,
+                        'updated_at' => $product->updated_at,
+                        'product_type' => $product->product_type,
+                        'main_ingredient' => $product->main_ingredient,
+                        'target_skin_type' => $product->target_skin_type,
+                        'image' => asset('storage/images/' . $product->image),
+                    ];
+                })
+            ]
+        ];
+
+        return response()->json($brandData, 200);
     }
 
     // Update a specific brand
