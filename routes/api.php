@@ -341,5 +341,6 @@ Route::middleware(['auth:sanctum', 'role:staff'])->prefix('manager')->group(func
     });
 
     Route::post('/orders/confirm-delivery/{order_id}', [OrderController::class, 'confirmDelivery']);
+
 });
 
