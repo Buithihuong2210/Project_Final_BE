@@ -289,7 +289,7 @@ Route::middleware(['auth:sanctum', 'role:admin|staff'])->prefix('manager')->grou
         Route::post('/', [QuestionController::class, 'store']); // Add a question to a specific survey
         Route::get('/', [QuestionController::class, 'index']); // List questions for a specific survey
         Route::get('/{question_id}', [QuestionController::class, 'show']); // Show a specific question
-        Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
+    Route::put('/{question_id}', [QuestionController::class, 'update']); // Update a specific question
         Route::delete('/{question_id}', [QuestionController::class, 'destroy']); // Delete a specific question
     });
 

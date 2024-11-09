@@ -64,6 +64,7 @@ class HashtagController extends Controller
             return response()->json([
                 'hashtag_id' => $hashtag->id,
                 'name' => $hashtag->name,
+                "ususage_count" => $hashtag->usage_count ?? 0,
                 'created_at' => $hashtag->created_at,
                 'updated_at' => $hashtag->updated_at,
             ], 201);
